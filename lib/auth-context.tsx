@@ -4,11 +4,20 @@ import type { Session } from "@supabase/supabase-js";
 import { MOCK_MODE, supabase } from "./supabase";
 import { mockUserId } from "./mockStore";
 
+export interface SignUpResult {
+  /**
+   * True when Supabase withheld a session pending email confirmation. Projects
+   * with "Confirm email" turned off return a session immediately and never send
+   * a mail, so the UI must not promise one unconditionally.
+   */
+  needsEmailConfirmation: boolean;
+}
+
 interface AuthContextValue {
   userId: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
 }
 
@@ -59,10 +68,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (MOCK_MODE) {
           await AsyncStorage.setItem(MOCK_SESSION_KEY, "signed-in");
           setUserId(mockUserId);
-          return;
+          return { needsEmailConfirmation: false };
         }
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+
+        if (data.session) {
+          // Confirmation is off: we're already signed in, so adopt the session
+          // rather than waiting on onAuthStateChange.
+          setUserId(data.session.user.id);
+          return { needsEmailConfirmation: false };
+        }
+        return { needsEmailConfirmation: true };
       },
       async signOut() {
         if (MOCK_MODE) {

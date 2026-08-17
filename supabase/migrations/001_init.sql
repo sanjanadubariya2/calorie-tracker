@@ -18,14 +18,17 @@ create table if not exists profiles (
 
 alter table profiles enable row level security;
 
+drop policy if exists "Users can view their own profile" on profiles;
 create policy "Users can view their own profile"
   on profiles for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own profile" on profiles;
 create policy "Users can insert their own profile"
   on profiles for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own profile" on profiles;
 create policy "Users can update their own profile"
   on profiles for update
   using (auth.uid() = user_id)
@@ -55,19 +58,23 @@ create index if not exists food_logs_user_date_idx on food_logs (user_id, logged
 
 alter table food_logs enable row level security;
 
+drop policy if exists "Users can view their own food logs" on food_logs;
 create policy "Users can view their own food logs"
   on food_logs for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own food logs" on food_logs;
 create policy "Users can insert their own food logs"
   on food_logs for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own food logs" on food_logs;
 create policy "Users can update their own food logs"
   on food_logs for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete their own food logs" on food_logs;
 create policy "Users can delete their own food logs"
   on food_logs for delete
   using (auth.uid() = user_id);
@@ -85,14 +92,17 @@ create table if not exists user_streaks (
 
 alter table user_streaks enable row level security;
 
+drop policy if exists "Users can view their own streak" on user_streaks;
 create policy "Users can view their own streak"
   on user_streaks for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own streak" on user_streaks;
 create policy "Users can insert their own streak"
   on user_streaks for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own streak" on user_streaks;
 create policy "Users can update their own streak"
   on user_streaks for update
   using (auth.uid() = user_id)

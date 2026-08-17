@@ -37,9 +37,16 @@ screenshots) — no Supabase project needed yet. Great for building/reviewing UI
 ## 3. Connect real Supabase (when ready to go live)
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In the Supabase SQL Editor, run `supabase/migrations/001_init.sql`. This
-   creates `profiles`, `food_logs`, and `user_streaks` with Row Level
-   Security so each user only ever sees their own rows.
+2. In the Supabase SQL Editor, run **both** migrations in order:
+   - `supabase/migrations/001_init.sql` — creates `profiles`, `food_logs`, and
+     `user_streaks` with Row Level Security so each user only ever sees their
+     own rows.
+   - `supabase/migrations/002_social.sql` — adds usernames, avatars, and
+     friends. Also creates the public `avatars` storage bucket.
+
+   Both are safe to re-run. Note that `profiles` stays readable only by its
+   owner: friends see each other through `SECURITY DEFINER` functions that
+   return daily totals and streaks, never age, weight, or individual meals.
 3. In Supabase → Authentication → Providers, confirm Email is enabled. For a
    student project you likely want to turn **off** "Confirm email" under
    Authentication → Settings so signup is instant (re-enable for production).
@@ -67,30 +74,64 @@ project you want live/demoable at any time, add a free cron ping:
 - **Or**: a GitHub Actions workflow on a schedule trigger running `curl`
   against the same URL (works on public repos for free).
 
-## 4. Deploy the web version
+## 4. Deploy the web version (Vercel)
+
+`vercel.json` already sets the build command, output directory, and the SPA
+rewrite rule. That rewrite matters: the app is a single-page export, so
+without it a refresh on `/reports` or `/profile` returns a 404.
 
 ```bash
-npx expo export --platform web
+npm install -g vercel
+vercel login          # opens a browser
+vercel --prod
 ```
 
-This outputs a static site to `dist/`. Deploy it:
+Then set the environment variables in **Vercel → Project → Settings →
+Environment Variables**, for the Production environment:
 
-- **Vercel**: `npx vercel dist --prod` (or connect the GitHub repo and set
-  build command to the export command above, output directory `dist`).
-- **Netlify**: drag-and-drop the `dist/` folder in the Netlify dashboard, or
-  connect the repo with the same build command/output directory.
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+EXPO_PUBLIC_MOCK_MODE=false
+```
 
-Remember to set `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`,
-and `EXPO_PUBLIC_MOCK_MODE=false` as environment variables in your hosting
-provider's dashboard — `.env` is git-ignored and won't be picked up there.
+Redeploy after adding them — these are inlined at build time, so a build that
+ran without them stays in demo mode. `.env` is git-ignored and is never
+uploaded, which is why the dashboard copy is required.
+
+> **Check after deploying:** if the yellow "Demo mode" banner appears at the
+> top of the live site, the credentials didn't reach the build. See the
+> warning in section 5.
 
 ## 5. Build an Android APK (no Play Store, no $25 fee)
 
 ```bash
 npm install -g eas-cli
 eas login
+eas init                                   # links the project, writes the EAS project ID
 eas build --profile apk --platform android
 ```
+
+> ### ⚠️ The APK will silently ship in demo mode without this step
+>
+> `MOCK_MODE` is on whenever the Supabase URL or key is missing — not just
+> when the flag says so (see `lib/supabase.ts`). The `apk` profile sets
+> `EXPO_PUBLIC_MOCK_MODE=false`, but with no credentials at build time the app
+> falls back to demo data and a sign-in that accepts **any** password.
+>
+> Register them as EAS environment variables before building:
+>
+> ```bash
+> eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value "https://your-ref.supabase.co" --environment production
+> eas env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "your-anon-public-key" --environment production
+> ```
+>
+> The anon key is designed to be public — it ships inside every client build
+> regardless, and Row Level Security is what actually protects the data. It
+> is not a secret, so committing it to `eas.json` instead is also fine.
+>
+> After installing the APK, confirm the yellow "Demo mode" banner is **not**
+> showing. That banner is the tell that credentials didn't make it in.
 
 When the build finishes, EAS gives you a direct `.apk` download link. Host
 that file on your own website (or the same Vercel/Netlify site) so users can

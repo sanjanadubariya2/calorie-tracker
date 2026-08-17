@@ -13,6 +13,10 @@ export interface Profile {
   goal: Goal;
   daily_target_kcal: number;
   created_at: string;
+  // Added in migration 002. Optional so existing rows (and mock data) that
+  // predate the social features still satisfy the type.
+  username?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface FoodLog {

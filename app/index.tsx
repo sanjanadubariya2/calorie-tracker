@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import { getProfile } from "@/lib/api";
@@ -30,7 +30,11 @@ export default function Index() {
     );
   }
 
-  if (!userId) return <Redirect href="/(auth)/login" />;
+  // On web a signed-out visitor is a prospective user, so they get the landing
+  // page and its app download. In the installed app they're already past that.
+  if (!userId) {
+    return <Redirect href={Platform.OS === "web" ? "/landing" : "/(auth)/login"} />;
+  }
   if (!hasProfile) return <Redirect href="/onboarding/profile-setup" />;
   return <Redirect href="/(tabs)" />;
 }

@@ -19,6 +19,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" />
+          <Stack.Screen name="landing" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="onboarding/profile-setup" />
           <Stack.Screen name="(tabs)" />
@@ -28,6 +29,10 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="modals/meal-detail"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
+            name="modals/edit-social-profile"
             options={{ presentation: "modal", headerShown: false }}
           />
           <Stack.Screen

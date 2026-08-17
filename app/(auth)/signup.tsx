@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
-import { MOCK_MODE } from "@/lib/supabase";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
 export default function SignupScreen() {
@@ -31,12 +30,13 @@ export default function SignupScreen() {
 
     setSubmitting(true);
     try {
-      await signUp(email.trim(), password);
-      if (MOCK_MODE) {
-        router.replace("/");
-      } else {
-        // Supabase sends a confirmation email by default.
+      const { needsEmailConfirmation } = await signUp(email.trim(), password);
+      // Only promise an email when Supabase actually withheld the session for
+      // one. With "Confirm email" off, signup logs you straight in.
+      if (needsEmailConfirmation) {
         setDone(true);
+      } else {
+        router.replace("/");
       }
     } catch (e) {
       setError((e as Error).message || "Couldn't create your account. Try again.");

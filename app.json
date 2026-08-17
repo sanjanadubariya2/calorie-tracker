@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "package": "com.calorietracker.app",
       "adaptiveIcon": {
@@ -25,11 +27,44 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Calorie Tracker to access your photos so you can set a profile picture."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "packagingOptions": {
+              "exclude": [
+                "lib/x86/**",
+                "lib/x86_64/**",
+                "lib/armeabi-v7a/**"
+              ]
+            }
+          }
+        }
+      ]
+    ],
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "0301e3cb-9374-466b-8a3e-7d6733ef2cda"
       }
-    }
+    },
+    "owner": "sanjanaaaa108",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0301e3cb-9374-466b-8a3e-7d6733ef2cda"
+    },
+    "ios": {}
   }
 }
