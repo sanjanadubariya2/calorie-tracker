@@ -124,11 +124,4 @@ supabase/migrations/    SQL schema + Row Level Security policies
 constants/theme.ts      Colors, spacing, typography, meal slot definitions
 ```
 
-## Building further with Claude Code
 
-Each folder above maps to one of the five build phases from the original
-plan (DB/auth → dashboard UI → food logging → profile/targets → build/deploy).
-The code here already implements all five end to end; from here, point
-Claude Code at individual files in `components/` or `app/` for follow-up
-features (edit/delete a logged item, notifications, dark/light theme toggle,
-etc.) rather than regenerating from scratch.
