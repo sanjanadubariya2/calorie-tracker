@@ -9,6 +9,249 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assistant_conversations: {
+        Row: {
+          created_at: string
+          estimated_cost_usd: number
+          expires_at: string
+          id: string
+          input_tokens: number
+          last_seq: number
+          message_count: number
+          output_tokens: number
+          summary: Json | null
+          summary_through_seq: number
+          summary_updated_at: string | null
+          title: string | null
+          turn_started_at: string | null
+          turn_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_cost_usd?: number
+          expires_at?: string
+          id?: string
+          input_tokens?: number
+          last_seq?: number
+          message_count?: number
+          output_tokens?: number
+          summary?: Json | null
+          summary_through_seq?: number
+          summary_updated_at?: string | null
+          title?: string | null
+          turn_started_at?: string | null
+          turn_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          estimated_cost_usd?: number
+          expires_at?: string
+          id?: string
+          input_tokens?: number
+          last_seq?: number
+          message_count?: number
+          output_tokens?: number
+          summary?: Json | null
+          summary_through_seq?: number
+          summary_updated_at?: string | null
+          title?: string | null
+          turn_started_at?: string | null
+          turn_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      assistant_messages: {
+        Row: {
+          client_message_id: string | null
+          content: string
+          conversation_id: string
+          correlation_id: string | null
+          created_at: string
+          estimated_cost_usd: number | null
+          id: string
+          input_tokens: number | null
+          model: string | null
+          outcome: string | null
+          output_tokens: number | null
+          response: Json | null
+          role: string
+          seq: number
+          thinking_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          client_message_id?: string | null
+          content: string
+          conversation_id: string
+          correlation_id?: string | null
+          created_at?: string
+          estimated_cost_usd?: number | null
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          outcome?: string | null
+          output_tokens?: number | null
+          response?: Json | null
+          role: string
+          seq: number
+          thinking_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          client_message_id?: string | null
+          content?: string
+          conversation_id?: string
+          correlation_id?: string | null
+          created_at?: string
+          estimated_cost_usd?: number | null
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          outcome?: string | null
+          output_tokens?: number | null
+          response?: Json | null
+          role?: string
+          seq?: number
+          thinking_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_messages_conversation_id_user_id_fkey"
+            columns: ["conversation_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_conversations"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      assistant_proposals: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          expires_at: string
+          food_log_ids: string[]
+          id: string
+          kind: string
+          payload: Json
+          status: string
+          status_changed_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          expires_at: string
+          food_log_ids?: string[]
+          id?: string
+          kind?: string
+          payload: Json
+          status?: string
+          status_changed_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          expires_at?: string
+          food_log_ids?: string[]
+          id?: string
+          kind?: string
+          payload?: Json
+          status?: string
+          status_changed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_proposals_conversation_id_user_id_fkey"
+            columns: ["conversation_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_conversations"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      assistant_tool_calls: {
+        Row: {
+          arguments: Json
+          created_at: string
+          duration_ms: number | null
+          id: string
+          message_id: string
+          result_chars: number | null
+          status: string
+          step: number
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          arguments: Json
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          message_id: string
+          result_chars?: number | null
+          status: string
+          step: number
+          tool: string
+          user_id: string
+        }
+        Update: {
+          arguments?: Json
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          message_id?: string
+          result_chars?: number | null
+          status?: string
+          step?: number
+          tool?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_tool_calls_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_usage_daily: {
+        Row: {
+          estimated_cost_usd: number
+          input_tokens: number
+          output_tokens: number
+          turns: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          estimated_cost_usd?: number
+          input_tokens?: number
+          output_tokens?: number
+          turns?: number
+          usage_date: string
+          user_id: string
+        }
+        Update: {
+          estimated_cost_usd?: number
+          input_tokens?: number
+          output_tokens?: number
+          turns?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       food_aliases: {
         Row: {
           alias: string
@@ -429,6 +672,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dietary_preferences: {
+        Row: {
+          allergies: string[]
+          created_at: string
+          cuisines: string[]
+          diet: string | null
+          dislikes: string[]
+          meal_preferences: string[]
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergies?: string[]
+          created_at?: string
+          cuisines?: string[]
+          diet?: string | null
+          dislikes?: string[]
+          meal_preferences?: string[]
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergies?: string[]
+          created_at?: string
+          cuisines?: string[]
+          diet?: string | null
+          dislikes?: string[]
+          meal_preferences?: string[]
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_streaks: {
         Row: {
           badges_earned: number
@@ -581,6 +860,10 @@ export type Database = {
       }
       is_valid_micronutrients: { Args: { p: Json }; Returns: boolean }
       is_valid_nutrients_per_100g: { Args: { p: Json }; Returns: boolean }
+      is_valid_text_list: {
+        Args: { p_items: string[]; p_max_items: number; p_max_len: number }
+        Returns: boolean
+      }
       is_valid_timezone: { Args: { p_tz: string }; Returns: boolean }
       macro_targets: {
         Args: {

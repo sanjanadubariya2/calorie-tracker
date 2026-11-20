@@ -6,6 +6,7 @@
       Needs CATALOGUE_DATABASE_URL (the catalogue_writer role, migration 008).
 
   python -m app.cli purge-meal-images [--dry-run]
+  python -m app.cli purge-assistant-conversations   (needs ASSISTANT_DATABASE_URL)
       Deletes expired meal photos (object first, then row).
       Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. The service-role key is
       used ONLY by this command, in its own environment; the API server never
@@ -95,6 +96,27 @@ def cmd_purge_meal_images(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_purge_assistant(args: argparse.Namespace) -> int:
+    """Deletes conversations past their retention date (messages and tool
+    records go with them). Uses assistant_writer, which can delete ONLY
+    expired conversations (migration 011 policy)."""
+    from app.assistant.store import AssistantWriter
+
+    writer = AssistantWriter(_require_env("ASSISTANT_DATABASE_URL"), retention_days=90)
+    deleted = writer._run_sync(writer.purge_expired)
+    print(f"deleted {deleted} expired conversation(s)")
+    return 0
+
+
+def cmd_tools_doc(args: argparse.Namespace) -> int:
+    from app.assistant.tools.registry import tools_markdown
+
+    with open(args.out, "w", encoding="utf-8") as f:
+        f.write(tools_markdown())
+    print(f"wrote {args.out}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -109,6 +131,13 @@ def main(argv: list[str] | None = None) -> int:
     purge = sub.add_parser("purge-meal-images", help="delete expired meal photos")
     purge.add_argument("--dry-run", action="store_true")
     purge.set_defaults(func=cmd_purge_meal_images)
+
+    purge_chats = sub.add_parser("purge-assistant-conversations", help="delete expired assistant conversations")
+    purge_chats.set_defaults(func=cmd_purge_assistant)
+
+    doc = sub.add_parser("assistant-tools-doc", help="write the assistant tool reference (Markdown)")
+    doc.add_argument("--out", default="docs/assistant-tools.md")
+    doc.set_defaults(func=cmd_tools_doc)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -18,12 +18,19 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import daily_status, foods, health, meal_images, recognition
+from app.api.routes import assistant, daily_status, foods, health, meal_images, recognition
+from app.assistant.proposals import ProposalService, ProposalStore, SupabaseProposalStore
+from app.assistant.service import AssistantService
+from app.assistant.store import AssistantWriter, ConversationStore, SupabaseConversationStore
+from app.assistant.tools.registry import default_registry
 from app.core.config import Environment, Settings, get_settings
+from app.core.request_context import CorrelationIdMiddleware
 from app.core.security import JwksCache, TokenVerifier
 from app.db.storage import SupabaseStorage
 from app.db.supabase import DatabaseError, DatabaseUnavailable, SupabaseRest
 from app.services.catalogue.importer import OffImporter, _SlidingWindow
+from app.llm.factory import build_llm_service
+from app.llm.service import LLMService
 from app.services.recognition.providers import RecognitionProvider, build_provider
 
 logger = logging.getLogger("app")
@@ -33,9 +40,13 @@ def create_app(
     settings: Settings | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
     recognizer: RecognitionProvider | None = None,
+    llm: LLMService | None = None,
+    assistant_store: ConversationStore | None = None,
+    proposal_store: ProposalStore | None = None,
 ) -> FastAPI:
     """`transport` lets tests replace the network (Supabase JWKS and REST);
-    `recognizer` replaces the AI provider (tests use a fake)."""
+    `recognizer` and `llm` replace the AI providers and `assistant_store` the
+    conversation database (tests use fakes)."""
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -50,12 +61,24 @@ def create_app(
             app.state.settings = settings
             app.state.recognizer = recognizer or build_provider(settings)
             app.state.recognition_limiter = _SlidingWindow(settings.recognitions_per_user_per_hour, 3600)
+            assistant_llm = llm or build_llm_service(settings)
+            writer = (AssistantWriter(settings.assistant_database_url.get_secret_value(), settings.assistant_retention_days)
+                      if settings.assistant_database_url else None)
+            proposals = ProposalService(
+                proposal_store or SupabaseProposalStore(app.state.db, writer), app.state.db,
+                settings.assistant_proposal_ttl_minutes,
+            )
+            app.state.assistant = AssistantService(
+                assistant_store or SupabaseConversationStore(app.state.db, writer),
+                assistant_llm, default_registry(), settings, app.state.db, proposals,
+            )
             try:
                 yield
             finally:
-                close = getattr(app.state.recognizer, "aclose", None)
-                if close is not None:
-                    await close()
+                for client in (app.state.recognizer, assistant_llm.provider):
+                    close = getattr(client, "aclose", None)
+                    if close is not None:
+                        await close()
 
     is_prod = settings.environment is Environment.production
     app = FastAPI(
@@ -73,9 +96,12 @@ def create_app(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
         allow_credentials=False,  # bearer tokens, not cookies
-        allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        expose_headers=["X-Request-ID", "Retry-After"],
     )
+    # Outermost: every response, including errors, carries the correlation id.
+    app.add_middleware(CorrelationIdMiddleware)
 
     # Error responses never include upstream messages, SQL, or stack traces.
     @app.exception_handler(DatabaseUnavailable)
@@ -113,4 +139,5 @@ def create_app(
     app.include_router(foods.router)
     app.include_router(meal_images.router)
     app.include_router(recognition.router)
+    app.include_router(assistant.router)
     return app

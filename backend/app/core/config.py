@@ -94,6 +94,43 @@ class Settings(BaseSettings):
     recognition_max_items: int = Field(default=12, ge=1, le=30)
     recognition_max_text_chars: int = Field(default=1000, ge=50, le=5000)
 
+    # ---- AI nutrition assistant (Phase 2). Uses GEMINI_API_KEY. ----------------
+    assistant_provider: Literal["gemini", "disabled"] = "gemini"
+    # Default: the model that has been reliably available; 3.8 as fallback.
+    assistant_model: str = "gemini-3.5-flash-lite"
+    assistant_fallback_models: str = "gemini-3.8-flash"
+    # Summaries and titles: a cheap model.
+    assistant_summary_model: str = "gemini-3.5-flash-lite"
+    assistant_thinking_level: Literal["low", "medium", "high"] = "low"
+    assistant_llm_timeout_seconds: float = Field(default=25.0, gt=0, le=120)   # per model call
+    assistant_llm_retry_attempts: int = Field(default=2, ge=1, le=4)         # transient failures only
+    assistant_turn_timeout_seconds: float = Field(default=75.0, gt=0, le=300)  # whole turn
+    assistant_max_steps: int = Field(default=6, ge=1, le=12)                   # model calls per turn
+    assistant_max_tool_calls_per_step: int = Field(default=4, ge=1, le=10)
+    assistant_tool_timeout_seconds: float = Field(default=8.0, gt=0, le=60)
+    assistant_max_tool_result_chars: int = Field(default=6000, ge=500, le=50000)
+    assistant_max_output_tokens: int = Field(default=2048, ge=256, le=16000)
+    assistant_turn_token_budget: int = Field(default=40000, ge=2000, le=1_000_000)
+    assistant_daily_token_budget: int = Field(default=200000, ge=10000, le=50_000_000)  # per user
+    assistant_context_token_budget: int = Field(default=6000, ge=1000, le=100000)      # history + summaries
+    assistant_history_max_messages: int = Field(default=20, ge=2, le=100)
+    assistant_max_message_chars: int = Field(default=2000, ge=50, le=8000)
+    assistant_reply_max_chars: int = Field(default=4000, ge=200, le=8000)
+    assistant_turns_per_user_per_minute: int = Field(default=10, ge=1, le=100)
+    # Summarise older messages once this many sit outside the recent window.
+    assistant_summary_trigger_messages: int = Field(default=12, ge=4, le=200)
+    # Food-log proposals must be confirmed within this many minutes.
+    assistant_proposal_ttl_minutes: int = Field(default=30, ge=1, le=1440)
+    # Conversations are deleted this many days after their last activity.
+    assistant_retention_days: int = Field(default=90, ge=1, le=3650)
+    # Postgres URL for the `assistant_writer` role (migration 011), e.g.
+    # postgresql://assistant_writer.<project-ref>:<password>@<pooler-host>:5432/postgres
+    # Without it, assistant endpoints answer 503.
+    assistant_database_url: SecretStr | None = None
+    # Optional prices for cost estimates, USD per million tokens, JSON:
+    # {"gemini-3.5-flash-lite": {"input": 0.1, "output": 0.4}}. Unset: cost unknown.
+    llm_prices_json: str = ""
+
     _split_algorithms = field_validator("supabase_jwt_algorithms", mode="before")(_split_csv)
     _split_origins = field_validator("allowed_origins", mode="before")(_split_csv)
 
@@ -118,6 +155,7 @@ class Settings(BaseSettings):
     def _check_consistency(self) -> "Settings":
         if "HS256" in self.supabase_jwt_algorithms and not self.supabase_jwt_secret:
             raise ValueError("HS256 is enabled but SUPABASE_JWT_SECRET is not set")
+        self.llm_prices  # validates LLM_PRICES_JSON at startup
         if self.environment is Environment.production:
             if not self.supabase_url.startswith("https://"):
                 raise ValueError("SUPABASE_URL must use https in production")
@@ -134,6 +172,26 @@ class Settings(BaseSettings):
     @property
     def jwks_url(self) -> str:
         return self.supabase_jwks_url or f"{self.supabase_url}/auth/v1/.well-known/jwks.json"
+
+    @property
+    def llm_prices(self) -> dict[str, tuple[float, float]]:
+        """{model: (input USD/M tokens, output USD/M tokens)} from LLM_PRICES_JSON."""
+        if not self.llm_prices_json.strip():
+            return {}
+        import json
+
+        try:
+            raw = json.loads(self.llm_prices_json)
+            prices = {str(m): (float(p["input"]), float(p["output"])) for m, p in raw.items()}
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
+            raise ValueError('LLM_PRICES_JSON must look like {"model": {"input": 0.1, "output": 0.4}}') from exc
+        if any(v < 0 for pair in prices.values() for v in pair):
+            raise ValueError("LLM_PRICES_JSON prices must be >= 0")
+        return prices
+
+    @property
+    def assistant_fallbacks(self) -> tuple[str, ...]:
+        return tuple(m.strip() for m in self.assistant_fallback_models.split(",") if m.strip())
 
     @property
     def rest_url(self) -> str:

@@ -112,6 +112,30 @@ class SupabaseRest:
             raise DatabaseError(502, None, f"insert {table} returned an unexpected shape")
         return rows[0]
 
+    async def insert_many(self, user: AuthenticatedUser, table: str, rows: list[dict[str, Any]], *,
+                          select: str = "*") -> list[dict[str, Any]]:
+        """Inserts several rows as `user` in ONE request, which PostgREST runs as
+        one transaction: either every row is saved or none is."""
+        saved = await self._request(
+            user, "POST", table, label=f"insert {table}", json=rows, params={"select": select},
+            headers={"Prefer": "return=representation"},
+        )
+        if not isinstance(saved, list) or len(saved) != len(rows):
+            raise DatabaseError(502, None, f"insert {table} returned an unexpected shape")
+        return saved
+
+    async def upsert(self, user: AuthenticatedUser, table: str, row: dict[str, Any], *, on_conflict: str,
+                     select: str = "*") -> dict[str, Any]:
+        """Inserts or updates one row as `user` (RLS applies to both) and returns it."""
+        rows = await self._request(
+            user, "POST", table, label=f"upsert {table}", json=row,
+            params={"on_conflict": on_conflict, "select": select},
+            headers={"Prefer": "return=representation,resolution=merge-duplicates"},
+        )
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise DatabaseError(502, None, f"upsert {table} returned an unexpected shape")
+        return rows[0]
+
     async def delete(self, user: AuthenticatedUser, table: str, params: dict[str, str]) -> list[dict[str, Any]]:
         """Deletes matching rows as `user` and returns the deleted rows."""
         return await self._request(

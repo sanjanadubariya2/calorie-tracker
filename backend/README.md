@@ -173,6 +173,60 @@ instances, each counts separately), 12 items per result. Errors: 503 not
 configured, 504 provider timeout, 429 rate-limited (with `Retry-After`), 422
 empty/unusable input or refused, 502 provider failure or unusable output.
 
+## AI nutrition assistant (Phase 2)
+
+A tool-using assistant over the user's own data. Backend only so far (no chat UI yet).
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/v1/assistant/conversations` | `{"title"?}` -> 201 |
+| GET | `/v1/assistant/conversations?limit=&before=` | Yours, newest first; page with `next_before` |
+| GET / DELETE | `/v1/assistant/conversations/{id}` | DELETE removes all its messages and tool records |
+| GET | `/v1/assistant/conversations/{id}/messages?limit=&before_seq=` | In order (seq); page backwards with `next_before_seq` |
+| POST | `/v1/assistant/conversations/{id}/messages` | `{"content", "client_message_id", "local_date"?}` -> the user message and the assistant's structured reply. Retrying with the same `client_message_id` never duplicates. |
+| POST | `/v1/assistant/conversations/{id}/summary` | Regenerate the conversation summary |
+| GET | `/v1/assistant/proposals/{id}` | A food-log proposal (owner only) |
+| POST | `/v1/assistant/proposals/{id}/confirm` | **The only way a proposal becomes food logs.** Called by the app when the user taps Confirm; optional edits `{"meal_type"?, "items": [{"index", "quantity"?, "unit"?, "remove"?}]}`. Re-validates and re-prices every item, inserts all logs as the user in one transaction (RLS, snapshot and streak triggers). 409 already logged / cancelled, 410 expired, 422 no longer valid, 502 save failed (nothing saved, retry allowed). |
+| POST | `/v1/assistant/proposals/{id}/reject` | Cancel a proposal |
+| GET / PUT / DELETE | `/v1/me/preferences` | Dietary preferences the user entered (diet, allergies from a fixed list, dislikes, cuisines, meal preferences, notes) |
+
+**How a turn works** (`app/assistant/`):
+1. Checks: the conversation is yours, per-minute limit, daily token budget, one turn at a time per conversation.
+2. Context (`context.py`): system rules, your local date, your stated preferences, the conversation's rolling
+   summary, short summaries of your 2 latest other conversations, then recent messages newer than the summary,
+   until the token budget (`ASSISTANT_CONTEXT_TOKEN_BUDGET`) or message cap. Food logs are never preloaded; tools
+   fetch bounded ranges on demand.
+3. Loop (`loop.py`): the model must call a tool every step: one of the six registered read-only tools
+   (see [docs/assistant-tools.md](docs/assistant-tools.md)) or `respond`. Arguments are validated; tools run as you
+   (RLS applies) with a timeout and a result-size cap. Limits: steps, calls per step, tokens per turn, overall timeout.
+   On the last step only `respond` is allowed.
+4. Response (`responses.py`): `respond` picks a type (`text`, `nutrition_summary`, `meal_recommendation`,
+   `food_search_results`, `proposed_action`, `clarification`); the server builds the payload from this turn's tool
+   results. A data type without matching tool data, or wording that claims something was saved, is rejected and the
+   model must correct it. `proposed_action` returns a catalogue-priced food-log proposal: nothing is ever saved.
+   `error` responses are server-only.
+5. Stored: the user message, the assistant message (type, tokens, estimated cost, correlation id) and one record per
+   tool call (arguments and status only, never results).
+
+**Actions** (migration 012): tools are split into *read* tools and one *proposal* tool, `prepare_food_log`. It
+matches each food in the catalogue, asks instead of guessing when a food is ambiguous or a quantity is missing,
+prices the rest with `food_portion`, and stores a pending proposal (30-minute expiry,
+`ASSISTANT_PROPOSAL_TTL_MINUTES`). The model has no tool that can confirm or write user records; "yes" in chat logs
+nothing. Confirmation is an HTTP-only path (above). Proposals are single-use (pending -> confirming -> confirmed); a
+failed save returns them to pending.
+
+**Storage and privacy** (migration 011): users can read and delete their own conversations but can't write messages;
+the backend writes them as the `assistant_writer` role (set its password, then `ASSISTANT_DATABASE_URL`). Tool records
+aren't readable by clients. Conversations expire 90 days after the last activity
+(`python -m app.cli purge-assistant-conversations`, schedule it daily). Message content is never logged. Messages and
+the user's food data are sent to Google (Gemini API) to generate replies; use a paid key in production (free-tier
+inputs may be used by Google) and say so in the privacy policy.
+
+**Model:** `gemini-3.5-flash-lite` with `gemini-3.8-flash` as fallback (3.8 was repeatedly overloaded during
+development), thinking level `low`, summaries on `gemini-3.5-flash-lite`. Retries: transient failures (timeout, 5xx)
+once with backoff, then fallback; 429 and refusals are never retried. Every response has an `X-Request-ID` header
+(or echoes a safe one you send).
+
 ## Configuration
 
 Copy `.env.example` to `.env` for local use (git-ignored), or set the same
@@ -192,6 +246,11 @@ don't end up in logs.
 | `GEMINI_API_KEY` | for AI recognition | backend only; never in the app |
 | `RECOGNITION_MODEL` | no | default `gemini-3.8-flash` |
 | `RECOGNITION_EFFORT` | no | Gemini thinking level: `low`, `medium` (default), `high` |
+| `ASSISTANT_DATABASE_URL` | for the assistant | `assistant_writer` role (migration 011); without it conversation writes return 503 |
+| `ASSISTANT_MODEL`, `ASSISTANT_FALLBACK_MODELS`, `ASSISTANT_SUMMARY_MODEL` | no | `gemini-3.5-flash-lite`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` |
+| `ASSISTANT_DAILY_TOKEN_BUDGET` | no | per user per UTC day, default 200000 |
+| `ASSISTANT_*` limits | no | turn timeout 75 s, 6 steps, 4 calls/step, 8 s per tool, 40k tokens/turn, 10 turns/min; see `app/core/config.py` |
+| `LLM_PRICES_JSON` | no | `{"model": {"input": USD/M tokens, "output": USD/M tokens}}` for cost estimates; unset = cost unknown |
 | `RECOGNITION_FALLBACK_MODELS` | no | comma-separated, default `gemini-3.5-flash-lite` |
 | `RECOGNITION_TIMEOUT_SECONDS` (per model), `RECOGNITIONS_PER_USER_PER_HOUR`, `RECOGNITION_MAX_ITEMS`, `RECOGNITION_MAX_TEXT_CHARS` | no | 30, 30, 12, 1000 |
 

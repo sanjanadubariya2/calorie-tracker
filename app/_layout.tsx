@@ -3,12 +3,15 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { AuthProvider } from "@/lib/auth-context";
+import { AssistantProvider } from "@/lib/assistant-context";
 import { DemoModeBanner } from "@/components/DemoModeBanner";
 import { colors } from "@/constants/theme";
 
 export default function RootLayout() {
   return (
     <AuthProvider>
+      {/* Above the navigator so the assistant's conversation survives switching tabs. */}
+      <AssistantProvider>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <StatusBar style="light" />
         <DemoModeBanner />
@@ -45,6 +48,7 @@ export default function RootLayout() {
           />
         </Stack>
       </View>
+      </AssistantProvider>
     </AuthProvider>
   );
 }
