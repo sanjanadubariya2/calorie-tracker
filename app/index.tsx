@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
-import { getProfile } from "@/lib/api";
+import { getProfile, syncProfileTimezone } from "@/lib/api";
 import { colors } from "@/constants/theme";
 
 export default function Index() {
@@ -17,7 +17,12 @@ export default function Index() {
       return;
     }
     getProfile(userId)
-      .then((profile) => setHasProfile(!!profile))
+      .then((profile) => {
+        setHasProfile(!!profile);
+        // Keeps the server's idea of this user's "today" in step with the
+        // device. Non-blocking: streaks fall back to lenient bounds if unset.
+        if (profile) syncProfileTimezone(userId, profile).catch(() => {});
+      })
       .catch(() => setHasProfile(false))
       .finally(() => setCheckingProfile(false));
   }, [userId, loading]);

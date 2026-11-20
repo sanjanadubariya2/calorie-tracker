@@ -8,19 +8,16 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditLogEntry } from "@/components/EditLogEntry";
 import { MEAL_SLOTS, colors, radius, spacing, typography, type MealType } from "@/constants/theme";
 import type { FoodLog } from "@/lib/types";
+import { isISODate, todayISO } from "@/lib/dates";
+import { isMealType } from "@/constants/theme";
 
 export default function MealDetailModal() {
   const { userId } = useAuth();
   const params = useLocalSearchParams<{ meal?: string; date?: string }>();
-  const meal = (params.meal as MealType) ?? "breakfast";
+  // Route params are untrusted strings: fall back rather than query with them.
+  const meal: MealType = isMealType(params.meal) ? params.meal : "breakfast";
   const mealLabel = MEAL_SLOTS.find((s) => s.key === meal)?.label ?? "Meal";
-
-  const now = new Date();
-  const date =
-    params.date ??
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate()
-    ).padStart(2, "0")}`;
+  const date = isISODate(params.date) ? params.date : todayISO();
 
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);

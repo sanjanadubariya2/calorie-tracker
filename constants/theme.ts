@@ -63,3 +63,7 @@ export const MEAL_SLOTS = [
 ] as const;
 
 export type MealType = (typeof MEAL_SLOTS)[number]["key"];
+
+export function isMealType(value: unknown): value is MealType {
+  return MEAL_SLOTS.some((s) => s.key === value);
+}

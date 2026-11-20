@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -13,7 +14,9 @@ export const MOCK_MODE =
 
 // In mock mode we still construct a harmless client (never called) so any
 // direct `import { supabase }` usage elsewhere doesn't crash at import time.
-export const supabase = createClient(
+// Typed against lib/database.types.ts, generated from supabase/migrations by
+// `npm run types:gen`. Regenerate after every migration.
+export const supabase = createClient<Database>(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder-anon-key",
   {

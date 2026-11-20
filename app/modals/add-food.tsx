@@ -4,26 +4,26 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
 import { addFoodLog, getRecentFoodLogs } from "@/lib/api";
 import { deriveFoodSuggestions, type LoggedFoodSuggestion } from "@/lib/foodSuggestions";
+import { isISODate, todayISO } from "@/lib/dates";
+import { snapshotFromSearchResult } from "@/lib/nutrition";
+import type { FoodSearchResult, NewFoodLog } from "@/lib/types";
 import { FoodSearchTab } from "@/components/FoodSearchTab";
 import { QuickAddTab } from "@/components/QuickAddTab";
-import { MEAL_SLOTS, colors, radius, spacing, typography, type MealType } from "@/constants/theme";
+import { MEAL_SLOTS, colors, isMealType, radius, spacing, typography, type MealType } from "@/constants/theme";
 
 type Tab = "search" | "quickAdd";
 
 export default function AddFoodModal() {
   const { userId } = useAuth();
   const params = useLocalSearchParams<{ meal?: string; date?: string }>();
-  const meal = (params.meal as MealType) ?? "breakfast";
+  // Route params are untrusted strings: validate before they reach the database.
+  const meal: MealType = isMealType(params.meal) ? params.meal : "breakfast";
   const mealLabel = MEAL_SLOTS.find((s) => s.key === meal)?.label ?? "Meal";
-  const now = new Date();
-  const loggedDate =
-    params.date ??
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate()
-    ).padStart(2, "0")}`;
+  const loggedDate = isISODate(params.date) ? params.date : todayISO();
 
   const [tab, setTab] = useState<Tab>("search");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [recent, setRecent] = useState<LoggedFoodSuggestion[]>([]);
   const [frequent, setFrequent] = useState<LoggedFoodSuggestion[]>([]);
 
@@ -40,71 +40,75 @@ export default function AddFoodModal() {
       });
   }, [userId]);
 
-  // Re-logs a past entry verbatim, skipping the portion step.
-  async function handleSuggestionConfirm(suggestion: LoggedFoodSuggestion) {
+  // Every path saves through here, so failures are always shown.
+  async function save(log: NewFoodLog) {
     if (!userId) return;
     setSaving(true);
+    setSaveError(null);
     try {
-      await addFoodLog(userId, {
-        logged_date: loggedDate,
-        meal_type: meal,
-        food_name: suggestion.foodName,
-        calories: suggestion.calories,
-        carbs_g: suggestion.carbsG,
-        fat_g: suggestion.fatG,
-        protein_g: suggestion.proteinG,
-        serving_g: suggestion.servingG,
-        is_quick_add: suggestion.isQuickAdd,
-      });
+      await addFoodLog(userId, log);
       router.back();
+    } catch {
+      setSaveError("Couldn't save this food. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleSearchConfirm(
-    food: { name: string },
+  // Re-logs a past entry, carrying its original snapshot so the database
+  // recomputes it exactly as before.
+  function handleSuggestionConfirm(suggestion: LoggedFoodSuggestion) {
+    return save({
+      logged_date: loggedDate,
+      meal_type: meal,
+      food_name: suggestion.foodName,
+      calories: suggestion.calories,
+      carbs_g: suggestion.carbsG,
+      fat_g: suggestion.fatG,
+      protein_g: suggestion.proteinG,
+      serving_g: suggestion.servingG,
+      is_quick_add: suggestion.isQuickAdd,
+      source: suggestion.isQuickAdd ? "quick_add" : "relog",
+      source_ref: suggestion.sourceRef,
+      nutrients_per_100g: suggestion.nutrientsPer100g,
+    });
+  }
+
+  // Search or favourite: keep the Open Food Facts barcode and the per-100 g
+  // values the portion was computed from.
+  function handleSearchConfirm(
+    food: FoodSearchResult,
     result: { servingGrams: number; calories: number; carbsG: number; fatG: number; proteinG: number }
   ) {
-    if (!userId) return;
-    setSaving(true);
-    try {
-      await addFoodLog(userId, {
-        logged_date: loggedDate,
-        meal_type: meal,
-        food_name: food.name,
-        calories: result.calories,
-        carbs_g: result.carbsG,
-        fat_g: result.fatG,
-        protein_g: result.proteinG,
-        serving_g: result.servingGrams,
-        is_quick_add: false,
-      });
-      router.back();
-    } finally {
-      setSaving(false);
-    }
+    return save({
+      logged_date: loggedDate,
+      meal_type: meal,
+      food_name: food.name,
+      calories: result.calories,
+      carbs_g: result.carbsG,
+      fat_g: result.fatG,
+      protein_g: result.proteinG,
+      serving_g: result.servingGrams,
+      is_quick_add: false,
+      source: "open_food_facts",
+      source_ref: food.id || null,
+      nutrients_per_100g: snapshotFromSearchResult(food),
+    });
   }
 
-  async function handleQuickAddConfirm(result: { title: string; calories: number }) {
-    if (!userId) return;
-    setSaving(true);
-    try {
-      await addFoodLog(userId, {
-        logged_date: loggedDate,
-        meal_type: meal,
-        food_name: result.title,
-        calories: result.calories,
-        carbs_g: 0,
-        fat_g: 0,
-        protein_g: 0,
-        serving_g: null,
-        is_quick_add: true,
-      });
-      router.back();
-    } finally {
-      setSaving(false);
-    }
+  function handleQuickAddConfirm(result: { title: string; calories: number }) {
+    return save({
+      logged_date: loggedDate,
+      meal_type: meal,
+      food_name: result.title,
+      calories: result.calories,
+      carbs_g: 0,
+      fat_g: 0,
+      protein_g: 0,
+      serving_g: null,
+      is_quick_add: true,
+      source: "quick_add",
+    });
   }
 
   return (
@@ -131,6 +135,8 @@ export default function AddFoodModal() {
           <Text style={[styles.tabText, tab === "quickAdd" && styles.tabTextActive]}>Quick Add</Text>
         </Pressable>
       </View>
+
+      {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
 
       <View style={styles.body}>
         {tab === "search" ? (
@@ -213,5 +219,11 @@ const styles = StyleSheet.create({
   savingText: {
     ...typography.title,
     color: colors.textPrimary,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.danger,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
 });

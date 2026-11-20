@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/auth-context";
 import { updateFoodLog } from "@/lib/api";
 import { MEAL_SLOTS, colors, radius, spacing, typography, type MealType } from "@/constants/theme";
 import type { FoodLog } from "@/lib/types";
+import { roundHalfAwayFromZero } from "@/lib/calculations";
+import { MAX_SERVING_G, scaleNutrients } from "@/lib/nutrition";
 
 interface Props {
   log: FoodLog;
@@ -11,7 +13,7 @@ interface Props {
   onSaved: () => void;
 }
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
+const round1 = (n: number) => roundHalfAwayFromZero(n, 1);
 
 export function EditLogEntry({ log, onCancel, onSaved }: Props) {
   const { userId } = useAuth();
@@ -44,10 +46,19 @@ export function EditLogEntry({ log, onCancel, onSaved }: Props) {
 
     const originalGrams = log.serving_g as number;
     const nextGrams = Number.isNaN(grams) ? 0 : grams;
+
+    // With a stored per-100 g snapshot, compute from it exactly as the
+    // database does: no drift across repeated edits.
+    if (log.nutrients_per_100g) {
+      const t = scaleNutrients(log.nutrients_per_100g, nextGrams);
+      return { calories: t.calories, carbsG: t.carbsG, fatG: t.fatG, proteinG: t.proteinG, servingG: nextGrams };
+    }
+
+    // Older logs have no snapshot: rescale the stored totals.
     const factor = nextGrams / originalGrams;
 
     return {
-      calories: Math.round(log.calories * factor),
+      calories: roundHalfAwayFromZero(log.calories * factor),
       carbsG: round1(log.carbs_g * factor),
       fatG: round1(log.fat_g * factor),
       proteinG: round1(log.protein_g * factor),
@@ -55,7 +66,7 @@ export function EditLogEntry({ log, onCancel, onSaved }: Props) {
     };
   }, [canRescale, grams, caloriesInput, log]);
 
-  const valid = canRescale ? grams > 0 : caloriesInput > 0;
+  const valid = canRescale ? grams > 0 && grams <= MAX_SERVING_G : caloriesInput > 0;
 
   async function handleSave() {
     if (!userId || !valid) return;

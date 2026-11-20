@@ -1,4 +1,5 @@
 import type { FoodLog } from "./types";
+import type { NutrientsPer100g } from "./nutrition";
 
 // One previously-logged food, collapsed across all the times it was logged.
 // Re-logging one of these copies its nutrition straight into a new entry, so
@@ -13,6 +14,9 @@ export interface LoggedFoodSuggestion {
   servingG: number | null;
   isQuickAdd: boolean;
   timesLogged: number;
+  /** Provenance of the original log, copied onto the re-log. */
+  sourceRef: string | null;
+  nutrientsPer100g: NutrientsPer100g | null;
 }
 
 // Same food name logged at two different portions is genuinely two different
@@ -32,6 +36,8 @@ function toSuggestion(log: FoodLog, timesLogged: number): LoggedFoodSuggestion {
     servingG: log.serving_g,
     isQuickAdd: log.is_quick_add,
     timesLogged,
+    sourceRef: log.source_ref ?? null,
+    nutrientsPer100g: log.nutrients_per_100g ?? null,
   };
 }
 

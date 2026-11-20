@@ -1,6 +1,18 @@
 import { MOCK_MODE, supabase } from "./supabase";
 import * as mock from "./mockStore";
-import type { FoodLog, Profile, UserStreak } from "./types";
+import type {
+  DbDailyStatus,
+  DbDailyTotal,
+  DbFoodLog,
+  DbProfile,
+  FoodLog,
+  NewFoodLog,
+  Profile,
+  UserStreak,
+} from "./types";
+import type { DailyStatus, NutritionRow } from "./nutrition";
+import { rangeEndingOn as rangeEndingOnDates } from "./dates";
+import { BACKEND_ENABLED, UnauthorizedError, backendGet, type BackendDailyStatus } from "./backend";
 
 // Every screen calls through this file rather than touching supabase or
 // mockStore directly. MOCK_MODE is decided once, in supabase.ts, from
@@ -16,7 +28,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data as DbProfile | null;
 }
 
 export async function upsertProfile(
@@ -32,7 +44,7 @@ export async function upsertProfile(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as DbProfile;
 }
 
 export async function getFoodLogsForDate(userId: string, date: string): Promise<FoodLog[]> {
@@ -46,7 +58,7 @@ export async function getFoodLogsForDate(userId: string, date: string): Promise<
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as DbFoodLog[];
 }
 
 export async function getFoodLogsInRange(
@@ -64,13 +76,15 @@ export async function getFoodLogsInRange(
     .lte("logged_date", endDate);
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as DbFoodLog[];
 }
 
-export async function addFoodLog(
-  userId: string,
-  log: Omit<FoodLog, "id" | "user_id">
-): Promise<FoodLog> {
+/**
+ * Saves a log. Pass provenance (source, source_ref, nutrients_per_100g) when
+ * known: with a snapshot and serving_g, the database computes the totals
+ * itself and the values sent here are only the client's preview.
+ */
+export async function addFoodLog(userId: string, log: NewFoodLog): Promise<FoodLog> {
   if (MOCK_MODE) return mock.mockAddFoodLog(log);
 
   const { data, error } = await supabase
@@ -80,15 +94,8 @@ export async function addFoodLog(
     .single();
 
   if (error) throw error;
-
-  // Best-effort streak bump — failures here shouldn't block the food log save.
-  try {
-    await bumpStreak(userId);
-  } catch {
-    // non-fatal
-  }
-
-  return data;
+  // The streak is recalculated by a database trigger in this same transaction.
+  return data as DbFoodLog;
 }
 
 // Backs the "Recently added" / "Frequently added" quick picks. Pulls the most
@@ -104,7 +111,7 @@ export async function getRecentFoodLogs(userId: string, limit = 200): Promise<Fo
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as DbFoodLog[];
 }
 
 export type FoodLogUpdate = Partial<
@@ -137,7 +144,7 @@ export async function updateFoodLog(
     .single();
 
   if (error) throw error;
-  return data;
+  return data as DbFoodLog;
 }
 
 export async function deleteFoodLog(userId: string, id: string): Promise<void> {
@@ -147,57 +154,153 @@ export async function deleteFoodLog(userId: string, id: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * The signed-in user's streak, computed by the database from their food logs
+ * (migration 004). `current_streak` already accounts for a lapsed streak.
+ * `userId` is kept for interface compatibility; the server uses the session.
+ */
 export async function getStreak(userId: string): Promise<UserStreak | null> {
   if (MOCK_MODE) return mock.mockGetStreak();
 
-  const { data, error } = await supabase
-    .from("user_streaks")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-
+  const { data, error } = await supabase.rpc("get_my_streak");
   if (error) throw error;
-  return data;
+  return data?.[0] ?? null;
 }
 
-async function bumpStreak(userId: string): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-
-  const existing = await getStreak(userId);
-
-  if (existing?.last_logged_date === today) return;
-
-  const continuing = existing?.last_logged_date === yesterday;
-  const nextStreak = continuing ? (existing?.current_streak ?? 0) + 1 : 1;
-  const crossedNewBadge = Math.floor(nextStreak / 1) > (existing?.badges_earned ?? 0);
-
-  const { error } = await supabase.from("user_streaks").upsert(
-    {
-      user_id: userId,
-      current_streak: nextStreak,
-      last_logged_date: today,
-      badges_earned: crossedNewBadge ? (existing?.badges_earned ?? 0) + 1 : existing?.badges_earned ?? 0,
-    },
-    { onConflict: "user_id" }
-  );
-
-  if (error) throw error;
-}
-
-// The 7-day window ending on (and including) the given local date.
-// Dates are built in local time — toISOString() would shift the day
-// for anyone not on UTC.
-export function rangeEndingOn(endDate: string): { start: string; end: string; days: string[] } {
-  const [y, m, d] = endDate.split("-").map(Number);
-  const days: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(y, m - 1, d - i);
-    days.push(
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-        date.getDate()
-      ).padStart(2, "0")}`
-    );
+/** The device's IANA time zone, e.g. "Asia/Kolkata", or null if unavailable. */
+export function deviceTimeZone(): string | null {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof tz === "string" && tz.length > 0 ? tz : null;
+  } catch {
+    return null;
   }
-  return { start: days[0], end: days[days.length - 1], days };
+}
+
+/**
+ * Stores the device's time zone on the profile when it differs, so the server
+ * evaluates "today" for streaks in the user's local calendar. Best-effort: the
+ * server falls back to lenient bounds while this is unset.
+ */
+export async function syncProfileTimezone(userId: string, profile: Profile): Promise<void> {
+  if (MOCK_MODE) return;
+  const tz = deviceTimeZone();
+  if (!tz || tz === profile.timezone) return;
+
+  const { error } = await supabase.from("profiles").update({ timezone: tz }).eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** The 7-day window ending on the given local date. Kept here for existing imports. */
+export function rangeEndingOn(endDate: string): { start: string; end: string; days: string[] } {
+  return rangeEndingOnDates(endDate, 7);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Daily nutrition (migration 005)                                           */
+/* ------------------------------------------------------------------------- */
+
+const num = (v: number | string | null | undefined): number => Number(v ?? 0) || 0;
+const numOrNull = (v: number | string | null | undefined): number | null =>
+  v == null ? null : Number(v);
+
+/** Maps a get_daily_status() row to the app's DailyStatus. */
+export function toDailyStatus(row: DbDailyStatus): DailyStatus {
+  const hasSplit =
+    row.macro_carb_pct != null && row.macro_fat_pct != null && row.macro_protein_pct != null;
+  return {
+    date: row.status_date,
+    targetKcal: numOrNull(row.target_kcal),
+    targetCarbsG: numOrNull(row.target_carbs_g),
+    targetFatG: numOrNull(row.target_fat_g),
+    targetProteinG: numOrNull(row.target_protein_g),
+    split: hasSplit
+      ? { carbPct: row.macro_carb_pct, fatPct: row.macro_fat_pct, proteinPct: row.macro_protein_pct }
+      : null,
+    consumed: {
+      calories: num(row.consumed_kcal),
+      carbsG: num(row.consumed_carbs_g),
+      fatG: num(row.consumed_fat_g),
+      proteinG: num(row.consumed_protein_g),
+      entryCount: num(row.entry_count),
+    },
+    remainingKcal: numOrNull(row.remaining_kcal),
+    remainingCarbsG: numOrNull(row.remaining_carbs_g),
+    remainingFatG: numOrNull(row.remaining_fat_g),
+    remainingProteinG: numOrNull(row.remaining_protein_g),
+  };
+}
+
+/** Maps the backend's GET /v1/me/daily-status response to the app's DailyStatus. */
+export function fromBackendDailyStatus(b: BackendDailyStatus): DailyStatus {
+  const t = b.targets;
+  return {
+    date: b.date,
+    targetKcal: t?.kcal ?? null,
+    targetCarbsG: t?.carbs_g ?? null,
+    targetFatG: t?.fat_g ?? null,
+    targetProteinG: t?.protein_g ?? null,
+    split: t
+      ? { carbPct: t.macro_split.carb_pct, fatPct: t.macro_split.fat_pct, proteinPct: t.macro_split.protein_pct }
+      : null,
+    consumed: {
+      calories: b.consumed.kcal,
+      carbsG: b.consumed.carbs_g,
+      fatG: b.consumed.fat_g,
+      proteinG: b.consumed.protein_g,
+      entryCount: b.consumed.entry_count,
+    },
+    remainingKcal: b.remaining?.kcal ?? null,
+    remainingCarbsG: b.remaining?.carbs_g ?? null,
+    remainingFatG: b.remaining?.fat_g ?? null,
+    remainingProteinG: b.remaining?.protein_g ?? null,
+  };
+}
+
+/**
+ * Targets, consumption and remaining amounts for one local date, from the
+ * database's get_daily_status(): the single source for daily numbers.
+ *
+ * With EXPO_PUBLIC_API_BASE_URL set, this goes through the FastAPI backend
+ * (which calls the same function as the user). If the backend is unreachable
+ * or errors, it falls back to calling the function directly: same numbers,
+ * same RLS. An auth failure is not retried that way; it is the caller's to show.
+ */
+export async function getDailyStatus(date: string): Promise<DailyStatus> {
+  if (MOCK_MODE) return mock.mockGetDailyStatus(date);
+
+  if (BACKEND_ENABLED) {
+    try {
+      return fromBackendDailyStatus(await backendGet<BackendDailyStatus>("/v1/me/daily-status", { date }));
+    } catch (error) {
+      if (error instanceof UnauthorizedError) throw error;
+      // Network failure, timeout or 5xx: use the database function directly.
+    }
+  }
+
+  const { data, error } = await supabase.rpc("get_daily_status", { p_date: date });
+  if (error) throw error;
+  const row = data?.[0];
+  if (!row) throw new Error("get_daily_status returned no row");
+  return toDailyStatus(row);
+}
+
+/**
+ * Per-day, per-meal sums for an inclusive local date range (at most 400 days),
+ * from get_daily_totals(). Each row carries entry_count.
+ */
+export async function getDailyTotals(startDate: string, endDate: string): Promise<NutritionRow[]> {
+  if (MOCK_MODE) return mock.mockGetDailyTotals(startDate, endDate);
+
+  const { data, error } = await supabase.rpc("get_daily_totals", { p_start: startDate, p_end: endDate });
+  if (error) throw error;
+  return ((data ?? []) as DbDailyTotal[]).map((r) => ({
+    logged_date: r.logged_date,
+    meal_type: r.meal_type,
+    calories: num(r.calories),
+    carbs_g: num(r.carbs_g),
+    fat_g: num(r.fat_g),
+    protein_g: num(r.protein_g),
+    entry_count: num(r.entry_count),
+  }));
 }

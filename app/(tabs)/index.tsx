@@ -1,9 +1,12 @@
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/lib/auth-context";
-import { getFoodLogsForDate, getFoodLogsInRange, getProfile, getStreak, rangeEndingOn } from "@/lib/api";
+import { getDailyStatus, getDailyTotals, getFoodLogsForDate, getStreak } from "@/lib/api";
+import { rangeEndingOn, shiftDate, toISODate } from "@/lib/dates";
+import { averageOverLoggedDays, targetBand, totalsByDate, type DailyStatus } from "@/lib/nutrition";
+import { DEFAULT_TARGET_KCAL } from "@/lib/calculations";
 import { getVisibleMealTypes } from "@/lib/mealPrefs";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { CalorieSummaryBar } from "@/components/CalorieSummaryBar";
@@ -11,21 +14,8 @@ import { NutritionCard } from "@/components/NutritionCard";
 import { MealSlotList } from "@/components/MealSlotList";
 import { WeeklyChart, type DayTotal } from "@/components/WeeklyChart";
 import { BadgeRow } from "@/components/BadgeRow";
-import { colors, spacing, MEAL_SLOTS, type MealType } from "@/constants/theme";
-import type { FoodLog, Profile } from "@/lib/types";
-
-function toISODate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
-
-function shiftDate(iso: string, deltaDays: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  date.setDate(date.getDate() + deltaDays);
-  return toISODate(date);
-}
+import { colors, spacing, typography, MEAL_SLOTS, type MealType } from "@/constants/theme";
+import type { FoodLog } from "@/lib/types";
 
 function formatDateLabel(iso: string, todayISO: string): string {
   if (iso === todayISO) return "Today";
@@ -50,7 +40,7 @@ export default function DashboardScreen() {
   const todayISO = toISODate(new Date());
 
   const [selectedDate, setSelectedDate] = useState(todayISO);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [status, setStatus] = useState<DailyStatus | null>(null);
   const [dayLogs, setDayLogs] = useState<FoodLog[]>([]);
   const [weekDays, setWeekDays] = useState<DayTotal[]>([]);
   const [weekAverage, setWeekAverage] = useState(0);
@@ -58,41 +48,35 @@ export default function DashboardScreen() {
   const [visibleMeals, setVisibleMeals] = useState<MealType[]>(MEAL_SLOTS.map((s) => s.key));
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
     const { start, end, days } = rangeEndingOn(selectedDate);
 
-    const [profileData, dayData, rangeData, streakData, mealPrefs] = await Promise.all([
-      getProfile(userId),
+    // Daily numbers come from the database (get_daily_status / get_daily_totals);
+    // the day's logs are still fetched for the meal list.
+    const [statusData, dayData, weekRows, streakData, mealPrefs] = await Promise.all([
+      getDailyStatus(selectedDate),
       getFoodLogsForDate(userId, selectedDate),
-      getFoodLogsInRange(userId, start, end),
+      getDailyTotals(start, end),
       getStreak(userId),
       getVisibleMealTypes(),
     ]);
 
-    setProfile(profileData);
+    setStatus(statusData);
     setDayLogs(dayData);
     setVisibleMeals(mealPrefs);
 
-    const totalsByDate = new Map<string, number>();
-    for (const log of rangeData) {
-      totalsByDate.set(log.logged_date, (totalsByDate.get(log.logged_date) ?? 0) + log.calories);
-    }
+    const byDate = totalsByDate(weekRows);
     const dayTotals: DayTotal[] = days.map((date) => ({
       date,
       dayLabel: String(Number(date.slice(8, 10))),
-      totalKcal: Math.round(totalsByDate.get(date) ?? 0),
+      totalKcal: Math.round(byDate.get(date)?.calories ?? 0),
       isToday: date === selectedDate,
     }));
     setWeekDays(dayTotals);
-
-    const nonZeroDays = dayTotals.filter((d) => d.totalKcal > 0);
-    const avg =
-      nonZeroDays.length > 0
-        ? nonZeroDays.reduce((sum, d) => sum + d.totalKcal, 0) / nonZeroDays.length
-        : 0;
-    setWeekAverage(avg);
+    setWeekAverage(averageOverLoggedDays(weekRows));
 
     setStreak(streakData?.current_streak ?? 0);
   }, [userId, selectedDate]);
@@ -100,22 +84,27 @@ export default function DashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      loadData().finally(() => setLoading(false));
+      setLoadError(null);
+      loadData()
+        .catch(() => setLoadError("Couldn't load your day. Pull down to retry."))
+        .finally(() => setLoading(false));
     }, [loadData])
   );
 
   async function handleRefresh() {
     setRefreshing(true);
-    await loadData();
+    setLoadError(null);
+    await loadData().catch(() => setLoadError("Couldn't load your day. Pull down to retry."));
     setRefreshing(false);
   }
 
   const isToday = selectedDate === todayISO;
-  const target = profile?.daily_target_kcal ?? 2000;
-  const consumed = Math.round(dayLogs.reduce((sum, l) => sum + l.calories, 0));
-  const carbsG = Math.round(dayLogs.reduce((sum, l) => sum + l.carbs_g, 0));
-  const fatG = Math.round(dayLogs.reduce((sum, l) => sum + l.fat_g, 0));
-  const proteinG = Math.round(dayLogs.reduce((sum, l) => sum + l.protein_g, 0));
+  const target = status?.targetKcal ?? DEFAULT_TARGET_KCAL;
+  const band = targetBand(target);
+  const consumed = Math.round(status?.consumed.calories ?? 0);
+  const carbsG = Math.round(status?.consumed.carbsG ?? 0);
+  const fatG = Math.round(status?.consumed.fatG ?? 0);
+  const proteinG = Math.round(status?.consumed.proteinG ?? 0);
 
   return (
     <ScrollView
@@ -136,6 +125,8 @@ export default function DashboardScreen() {
         ]}
       />
 
+      {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
+
       {loading ? (
         <View style={styles.contentSpinner}>
           <ActivityIndicator color={colors.progressFill} size="large" />
@@ -145,12 +136,12 @@ export default function DashboardScreen() {
           <CalorieSummaryBar
             consumed={consumed}
             target={target}
-            rangeLow={Math.round(target * 0.9)}
-            rangeHigh={Math.round(target * 1.1)}
+            rangeLow={band.low}
+            rangeHigh={band.high}
             maxScale={Math.round(target * 1.3)}
           />
 
-          <NutritionCard carbsG={carbsG} fatG={fatG} proteinG={proteinG} />
+          <NutritionCard carbsG={carbsG} fatG={fatG} proteinG={proteinG} split={status?.split} />
 
           <MealSlotList
             logsByMeal={groupByMeal(dayLogs)}
@@ -191,5 +182,10 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.danger,
+    marginBottom: spacing.md,
   },
 });

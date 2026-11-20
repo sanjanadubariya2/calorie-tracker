@@ -11,6 +11,8 @@ interface MockSocialDB {
   avatarUrl: string | null;
   friends: FriendSummary[];
   requests: PendingRequest[];
+  /** Requests this user has sent. Optional so mock DBs saved before it existed still load. */
+  outgoing?: PendingRequest[];
   directory: PublicProfile[];
 }
 
@@ -52,6 +54,7 @@ function seed(): MockSocialDB {
     requests: [
       { friendship_id: "mock-req-1", user_id: "mock-friend-4", username: "dev_eats", avatar_url: null },
     ],
+    outgoing: [],
     directory: [
       { user_id: "mock-friend-5", username: "rahul_fit", avatar_url: null },
       { user_id: "mock-friend-6", username: "sneha", avatar_url: null },
@@ -108,16 +111,36 @@ export async function mockSendFriendRequest(addresseeId: string): Promise<void> 
   const db = await load();
   const found = db.directory.find((p) => p.user_id === addresseeId);
   if (!found) return;
-  // Mock mode has no second device to accept, so requests land as friends.
+  // Matches the real flow: the request waits in "Sent requests" until it's
+  // cancelled. Mock mode has no second user, so nobody ever accepts it.
   db.directory = db.directory.filter((p) => p.user_id !== addresseeId);
-  db.friends.push({
-    ...found,
-    today_kcal: 0,
-    avg7_kcal: 0,
-    current_streak: 0,
-    daily_target_kcal: 2000,
-  });
+  db.outgoing = [
+    { friendship_id: `mock-out-${Date.now()}`, ...found },
+    ...(db.outgoing ?? []),
+  ];
   await save(db);
+}
+
+export async function mockDeclineFriendRequest(friendshipId: string): Promise<void> {
+  const db = await load();
+  const req = db.requests.find((r) => r.friendship_id === friendshipId);
+  if (!req) return;
+  db.requests = db.requests.filter((r) => r.friendship_id !== friendshipId);
+  db.directory.push({ user_id: req.user_id, username: req.username, avatar_url: req.avatar_url });
+  await save(db);
+}
+
+export async function mockCancelFriendRequest(friendshipId: string): Promise<void> {
+  const db = await load();
+  const req = (db.outgoing ?? []).find((r) => r.friendship_id === friendshipId);
+  if (!req) return;
+  db.outgoing = (db.outgoing ?? []).filter((r) => r.friendship_id !== friendshipId);
+  db.directory.push({ user_id: req.user_id, username: req.username, avatar_url: req.avatar_url });
+  await save(db);
+}
+
+export async function mockGetOutgoingRequests(): Promise<PendingRequest[]> {
+  return (await load()).outgoing ?? [];
 }
 
 export async function mockAcceptFriendRequest(friendshipId: string): Promise<void> {

@@ -2,21 +2,19 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { MacroBar } from "./MacroBar";
-import { MACRO_SPLIT, calculateActualMacroPercents } from "@/lib/calculations";
+import { DEFAULT_MACRO_SPLIT, calculateActualMacroPercents, type MacroSplit } from "@/lib/calculations";
 
 interface Props {
   carbsG: number;
   fatG: number;
   proteinG: number;
+  /** The user's own split from their profile (get_daily_status). */
+  split?: MacroSplit | null;
 }
 
-export function NutritionCard({ carbsG, fatG, proteinG }: Props) {
+export function NutritionCard({ carbsG, fatG, proteinG, split }: Props) {
   const actual = calculateActualMacroPercents(carbsG, fatG, proteinG);
-  const recommended = {
-    carbPct: Math.round(MACRO_SPLIT.carb * 100),
-    fatPct: Math.round(MACRO_SPLIT.fat * 100),
-    proteinPct: Math.round(MACRO_SPLIT.protein * 100),
-  };
+  const recommended = split ?? DEFAULT_MACRO_SPLIT;
 
   return (
     <View style={styles.card}>
@@ -53,7 +51,7 @@ function MacroStat({ label, value, color }: { label: string; value: number; colo
     <View style={styles.macroStat}>
       <Text style={[styles.macroLabel, { color }]}>{label}</Text>
       <Text style={styles.macroValue}>
-        {value}
+        {Math.round(value * 10) / 10}
         <Text style={styles.macroUnit}> g</Text>
       </Text>
     </View>

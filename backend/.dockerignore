@@ -1,0 +1,10 @@
+# Keep secrets, local tooling and tests out of the build context and image.
+.env
+.env.*
+!.env.example
+.venv/
+**/__pycache__
+**/*.pyc
+.pytest_cache/
+tests/
+.git

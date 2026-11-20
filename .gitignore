@@ -16,3 +16,10 @@ npm-debug.*
 
 .vercel
 .env*
+!.env.example
+
+# Python backend
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

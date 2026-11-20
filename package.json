@@ -7,7 +7,16 @@
     "android": "expo start --android",
     "web": "expo start --web",
     "build:web": "expo export --platform web",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "db:start": "supabase start -x realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
+    "db:stop": "supabase stop",
+    "test:db": "supabase test db",
+    "types:gen": "supabase gen types typescript --local --schema public > lib/database.types.ts",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "db:reset": "supabase db reset"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -31,8 +40,26 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@types/jest": "^29.5.12",
     "@types/react": "~18.2.79",
+    "eslint": "^8.57.1",
+    "eslint-config-expo": "~7.1.2",
+    "jest": "^29.4.0",
+    "jest-expo": "~51.0.4",
     "typescript": "~5.3.3"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "globalSetup": "./jest.global-setup.js",
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/supabase/",
+      "/backend/"
+    ]
+  }
 }

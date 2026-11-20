@@ -32,7 +32,7 @@ export function MealSlotList({ logsByMeal, onAddPress, onSlotPress, visibleMeals
               accessibilityRole="button"
             >
               <View style={styles.kcalPill}>
-                <Text style={styles.kcalValue}>{totalKcal}</Text>
+                <Text style={styles.kcalValue}>{Math.round(totalKcal).toLocaleString()}</Text>
                 <Text style={styles.kcalUnit}>kcal</Text>
               </View>
 

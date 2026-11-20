@@ -149,6 +149,53 @@ region.
 If you later want a Play Store listing itself, that's the one place the $25
 one-time Play Console fee applies — everything above works without it.
 
+## Testing and checks
+
+```bash
+npm run check        # typecheck + lint + unit tests: run before every commit
+npm test             # unit tests only (Jest, lib/__tests__/)
+npm run lint         # ESLint (eslint-config-expo)
+npm run typecheck    # tsc --noEmit
+```
+
+Unit tests cover the pure logic in `lib/`: targets and macros, report
+periods (including DST transitions), quick-pick suggestions, streak rules,
+username validation, and Open Food Facts normalization/fallback with a mocked
+`fetch`. They never touch a real Supabase project. Jest pins `TZ` to
+`America/New_York` (`jest.global-setup.js`) so date tests are deterministic.
+
+### Database tests (needs Docker)
+
+The RLS, grant and trigger rules are tested with pgTAP against a local
+Supabase stack built from `supabase/migrations/`:
+
+```bash
+npm run db:start     # local Postgres + Auth + REST, applies all migrations
+npm run test:db      # runs supabase/tests/*.test.sql
+npm run db:reset     # re-apply migrations from scratch after changing one
+npm run db:stop
+```
+
+### Backend API (optional)
+
+`backend/` is a FastAPI service that verifies Supabase sessions and serves
+`GET /v1/me/daily-status`. The app only uses it when `EXPO_PUBLIC_API_BASE_URL`
+is set; otherwise everything goes to Supabase directly. Setup, Docker and tests
+are in [backend/README.md](backend/README.md).
+
+### Database types
+
+`lib/database.types.ts` is generated from the migrations and types the
+Supabase client. After adding a migration, regenerate it with the local stack
+running:
+
+```bash
+npm run types:gen
+```
+
+`lib/types.ts` has compile-time guards that fail `tsc` if a migration renames
+or retypes a column the app's types depend on.
+
 ## Project structure
 
 ```

@@ -2,8 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
-import { getProfile } from "@/lib/api";
-import { calculateMacroTargets } from "@/lib/calculations";
+import { getDailyStatus, getProfile } from "@/lib/api";
+import {
+  ACTIVITY_LEVELS,
+  DEFAULT_ACTIVITY_LEVEL,
+  MIN_DAILY_TARGET_KCAL,
+  type ActivityLevel,
+} from "@/lib/calculations";
+import { todayISO } from "@/lib/dates";
+import type { DailyStatus } from "@/lib/nutrition";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
 // Acceptable macronutrient distribution ranges from the US National Academies'
@@ -16,16 +23,27 @@ const MACRO_RANGES = [
 
 export default function AboutNutritionModal() {
   const { userId } = useAuth();
-  const [targetKcal, setTargetKcal] = useState<number | null>(null);
+  const [status, setStatus] = useState<DailyStatus | null>(null);
+  const [activity, setActivity] = useState<ActivityLevel>(DEFAULT_ACTIVITY_LEVEL);
 
+  // Targets from get_daily_status, the same source as the dashboard.
   useEffect(() => {
     if (!userId) return;
-    getProfile(userId)
-      .then((p) => setTargetKcal(p?.daily_target_kcal ?? null))
-      .catch(() => setTargetKcal(null));
+    Promise.all([getDailyStatus(todayISO()), getProfile(userId)])
+      .then(([s, p]) => {
+        setStatus(s);
+        setActivity(p?.activity_level ?? DEFAULT_ACTIVITY_LEVEL);
+      })
+      .catch(() => setStatus(null));
   }, [userId]);
 
-  const macros = targetKcal ? calculateMacroTargets(targetKcal) : null;
+  const targetKcal = status?.targetKcal ?? null;
+  const split = status?.split ?? null;
+  const macros =
+    status?.targetCarbsG != null && status.targetFatG != null && status.targetProteinG != null
+      ? { carbsG: status.targetCarbsG, fatG: status.targetFatG, proteinG: status.targetProteinG }
+      : null;
+  const activityInfo = ACTIVITY_LEVELS.find((a) => a.value === activity);
 
   return (
     <View style={styles.wrap}>
@@ -43,7 +61,7 @@ export default function AboutNutritionModal() {
           <Text style={styles.cardBody}>
             {targetKcal
               ? `Your recommended daily calorie intake is ${targetKcal.toLocaleString()} calories. ` +
-                "This is based on your gender, age, height, weight, and goal."
+                "This is based on your gender, age, height, weight, activity level, and goal."
               : "Set up your profile to see a personalised daily calorie target."}
           </Text>
           <Text style={styles.cardBody}>
@@ -56,9 +74,12 @@ export default function AboutNutritionModal() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>How the target is calculated</Text>
           <Text style={styles.cardBody}>
-            We estimate your Basal Metabolic Rate with the Mifflin-St Jeor equation, scale it by a
-            light-activity factor to get your Total Daily Energy Expenditure, then adjust for your
-            goal — 500 kcal below for losing weight, 300 kcal above for gaining.
+            We estimate your Basal Metabolic Rate with the Mifflin-St Jeor equation, multiply it by
+            your activity factor
+            {activityInfo ? ` (${activityInfo.label.toLowerCase()}, ×${activityInfo.factor})` : ""} to
+            get your Total Daily Energy Expenditure, then adjust for your goal — 500 kcal below for
+            losing weight, 300 kcal above for gaining. The target never goes below{" "}
+            {MIN_DAILY_TARGET_KCAL.toLocaleString()} kcal.
           </Text>
         </View>
 
@@ -86,12 +107,12 @@ export default function AboutNutritionModal() {
           </Text>
         </View>
 
-        {macros && targetKcal && (
+        {macros && targetKcal && split && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Your target in grams</Text>
             <Text style={styles.cardBody}>
-              Here's how this app splits your {targetKcal.toLocaleString()} kcal, using a
-              55% / 25% / 20% balance:
+              Here's how your {targetKcal.toLocaleString()} kcal splits, using your{" "}
+              {split.carbPct}% / {split.fatPct}% / {split.proteinPct}% balance:
             </Text>
 
             <MacroLine

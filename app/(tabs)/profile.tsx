@@ -3,8 +3,10 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/lib/auth-context";
-import { getProfile, getStreak } from "@/lib/api";
-import { calculateMacroTargets } from "@/lib/calculations";
+import { getDailyStatus, getProfile, getStreak } from "@/lib/api";
+import { ACTIVITY_LEVELS, DEFAULT_ACTIVITY_LEVEL } from "@/lib/calculations";
+import { todayISO } from "@/lib/dates";
+import type { DailyStatus } from "@/lib/nutrition";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import type { Profile, UserStreak } from "@/lib/types";
 
@@ -18,16 +20,22 @@ export default function ProfileScreen() {
   const { userId, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [streak, setStreak] = useState<UserStreak | null>(null);
+  const [status, setStatus] = useState<DailyStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       if (!userId) return;
       setLoading(true);
-      Promise.all([getProfile(userId), getStreak(userId)])
-        .then(([p, s]) => {
+      // Targets come from get_daily_status, the same source as the dashboard.
+      Promise.all([getProfile(userId), getStreak(userId), getDailyStatus(todayISO())])
+        .then(([p, s, st]) => {
           setProfile(p);
           setStreak(s);
+          setStatus(st);
+        })
+        .catch(() => {
+          // Keep whatever loaded; the screen renders without the missing parts.
         })
         .finally(() => setLoading(false));
     }, [userId])
@@ -46,7 +54,9 @@ export default function ProfileScreen() {
     );
   }
 
-  const macros = profile ? calculateMacroTargets(profile.daily_target_kcal) : null;
+  const activityLabel =
+    ACTIVITY_LEVELS.find((a) => a.value === (profile?.activity_level ?? DEFAULT_ACTIVITY_LEVEL))?.label ?? "";
+  const targetKcal = status?.targetKcal ?? profile?.daily_target_kcal ?? null;
 
   return (
     <ScrollView style={styles.wrap} contentContainerStyle={styles.content}>
@@ -59,17 +69,24 @@ export default function ProfileScreen() {
             <StatRow label="Height" value={`${profile.height_cm} cm`} />
             <StatRow label="Weight" value={`${profile.weight_kg} kg`} />
             <StatRow label="Gender" value={profile.gender === "male" ? "Male" : "Female"} />
-            <StatRow label="Goal" value={GOAL_LABELS[profile.goal] ?? profile.goal} last />
+            <StatRow label="Goal" value={GOAL_LABELS[profile.goal] ?? profile.goal} />
+            <StatRow label="Activity" value={activityLabel} last />
           </View>
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Daily targets</Text>
-            <StatRow label="Calories" value={`${profile.daily_target_kcal.toLocaleString()} kcal`} />
-            {macros && (
+            {targetKcal != null && (
+              <StatRow label="Calories" value={`${targetKcal.toLocaleString()} kcal`} />
+            )}
+            {status?.targetCarbsG != null && status.split && (
               <>
-                <StatRow label="Carbs" value={`${macros.carbsG} g`} />
-                <StatRow label="Fat" value={`${macros.fatG} g`} />
-                <StatRow label="Protein" value={`${macros.proteinG} g`} last />
+                <StatRow label={`Carbs (${status.split.carbPct}%)`} value={`${status.targetCarbsG} g`} />
+                <StatRow label={`Fat (${status.split.fatPct}%)`} value={`${status.targetFatG} g`} />
+                <StatRow
+                  label={`Protein (${status.split.proteinPct}%)`}
+                  value={`${status.targetProteinG} g`}
+                  last
+                />
               </>
             )}
           </View>

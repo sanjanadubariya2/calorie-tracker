@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import type { ReportBucket } from "@/lib/reportPeriods";
+import { targetBand } from "@/lib/nutrition";
 
 const CHART_HEIGHT = 180;
 
@@ -16,8 +17,9 @@ export function CalorieReportChart({ buckets, averageKcal, targetKcal }: Calorie
   const peak = Math.max(targetKcal * 1.5, averageKcal, ...buckets.map((b) => b.totalKcal), 1);
   const toY = (value: number) => (value / peak) * CHART_HEIGHT;
 
-  const bandLow = targetKcal * 0.9;
-  const bandHeight = Math.max(2, toY(targetKcal * 1.1) - toY(bandLow));
+  const band = targetBand(targetKcal);
+  const bandLow = band.low;
+  const bandHeight = Math.max(2, toY(band.high) - toY(bandLow));
 
   return (
     <View style={styles.chartArea}>

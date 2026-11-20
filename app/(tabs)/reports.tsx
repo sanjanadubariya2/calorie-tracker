@@ -2,7 +2,9 @@ import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/lib/auth-context";
-import { getFoodLogsInRange, getProfile } from "@/lib/api";
+import { getDailyStatus, getDailyTotals } from "@/lib/api";
+import { DEFAULT_TARGET_KCAL } from "@/lib/calculations";
+import type { NutritionRow } from "@/lib/nutrition";
 import {
   bucketLogs,
   buildPeriodRange,
@@ -13,7 +15,6 @@ import {
 } from "@/lib/reportPeriods";
 import { CalorieReportChart, MacroReportChart } from "@/components/ReportChart";
 import { colors, radius, spacing, typography } from "@/constants/theme";
-import type { FoodLog } from "@/lib/types";
 
 type Metric = "calories" | "macros";
 
@@ -30,26 +31,34 @@ export default function ReportsScreen() {
   const [mode, setMode] = useState<PeriodMode>("days");
   const [metric, setMetric] = useState<Metric>("calories");
   const [offset, setOffset] = useState(0);
-  const [logs, setLogs] = useState<FoodLog[]>([]);
-  const [targetKcal, setTargetKcal] = useState(2000);
+  const [logs, setLogs] = useState<NutritionRow[]>([]);
+  const [targetKcal, setTargetKcal] = useState(DEFAULT_TARGET_KCAL);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const range = useMemo(() => buildPeriodRange(mode, today, offset), [mode, today, offset]);
 
   const loadData = useCallback(async () => {
     if (!userId) return;
-    const [rangeLogs, profile] = await Promise.all([
-      getFoodLogsInRange(userId, range.start, range.end),
-      getProfile(userId),
+    // Per-day, per-meal sums from the database instead of every raw log in the
+    // window (up to six months). The target line is the target in force at the
+    // end of the period, from the user's target history.
+    const lastDay = range.end < today ? range.end : today;
+    const [rows, status] = await Promise.all([
+      getDailyTotals(range.start, range.end),
+      getDailyStatus(lastDay),
     ]);
-    setLogs(rangeLogs);
-    if (profile) setTargetKcal(profile.daily_target_kcal);
-  }, [userId, range.start, range.end]);
+    setLogs(rows);
+    setTargetKcal(status.targetKcal ?? DEFAULT_TARGET_KCAL);
+  }, [userId, range.start, range.end, today]);
 
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      loadData().finally(() => setLoading(false));
+      setLoadError(null);
+      loadData()
+        .catch(() => setLoadError("Couldn't load this period. Try again."))
+        .finally(() => setLoading(false));
     }, [loadData])
   );
 
@@ -118,6 +127,10 @@ export default function ReportsScreen() {
         {loading ? (
           <View style={styles.spinnerWrap}>
             <ActivityIndicator color={colors.progressFill} size="large" />
+          </View>
+        ) : loadError ? (
+          <View style={styles.spinnerWrap}>
+            <Text style={styles.emptyTitle}>{loadError}</Text>
           </View>
         ) : summary.loggedDayCount === 0 ? (
           <View style={styles.spinnerWrap}>

@@ -1,5 +1,8 @@
-import type { FoodLog } from "./types";
 import { MEAL_SLOTS, type MealType } from "@/constants/theme";
+import { parseISODate as parseISO, shiftDate, toISODate } from "./dates";
+import type { NutritionRow } from "./nutrition";
+
+export { toISODate };
 
 // Period maths for the Reports screen. Everything is computed in local time —
 // toISOString() would roll the date over for anyone east or west of UTC.
@@ -20,22 +23,7 @@ export interface ReportBucket {
   isCurrent: boolean;
 }
 
-export function toISODate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
-
-function parseISO(iso: string): Date {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function addDays(iso: string, days: number): string {
-  const d = parseISO(iso);
-  d.setDate(d.getDate() + days);
-  return toISODate(d);
-}
+const addDays = shiftDate;
 
 /** Monday-based week start, matching the reference app's 7-day rows. */
 function startOfWeek(iso: string): string {
@@ -113,7 +101,7 @@ function labelFor(mode: PeriodMode, bucketStart: string): string {
 export function bucketLogs(
   mode: PeriodMode,
   range: PeriodRange,
-  logs: FoodLog[],
+  logs: NutritionRow[],
   today: string
 ): ReportBucket[] {
   const currentBucket = bucketKeyFor(mode, today);
@@ -174,7 +162,7 @@ export interface PeriodSummary {
  * Averages are per *logged* day, not per calendar day — a week with two days
  * logged shouldn't read as if the other five were zero-calorie days.
  */
-export function summarizePeriod(logs: FoodLog[]): PeriodSummary {
+export function summarizePeriod(logs: NutritionRow[]): PeriodSummary {
   const loggedDates = new Set(logs.map((l) => l.logged_date));
   const dayCount = Math.max(1, loggedDates.size);
 

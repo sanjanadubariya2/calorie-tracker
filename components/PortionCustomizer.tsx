@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/constants/theme";
-import { scaleNutrient, calculateActualMacroPercents } from "@/lib/calculations";
+import { scaleNutrient, calculateActualMacroPercents, roundHalfAwayFromZero } from "@/lib/calculations";
+import { MAX_SERVING_G, scaleNutrients } from "@/lib/nutrition";
 import { isFavourite, toggleFavourite } from "@/lib/foodPrefs";
 import { PortionSlider } from "./PortionSlider";
 import { NutritionLabel } from "./NutritionLabel";
@@ -23,9 +24,8 @@ interface Props {
 // slider multiplies. 100 g keeps the maths transparent.
 const BASE_SERVING_G = 100;
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
 const scaleOptional = (per100g: number | undefined, grams: number) =>
-  per100g == null ? undefined : round1(scaleNutrient(per100g, grams));
+  per100g == null ? undefined : roundHalfAwayFromZero(scaleNutrient(per100g, grams), 1);
 
 export function PortionCustomizer({ food, onConfirm, onCancel }: Props) {
   const [multiplier, setMultiplier] = useState(1);
@@ -55,15 +55,22 @@ export function PortionCustomizer({ food, onConfirm, onCancel }: Props) {
     return Number.isNaN(grams) || grams < 0 ? 0 : grams;
   }, [gramsText]);
 
+  // Same rounding as the database trigger, so the preview is what gets saved.
   const computed = useMemo(
-    () => ({
-      calories: Math.round(scaleNutrient(food.caloriesPer100g, servingGrams)),
-      carbsG: round1(scaleNutrient(food.carbsPer100g, servingGrams)),
-      fatG: round1(scaleNutrient(food.fatPer100g, servingGrams)),
-      proteinG: round1(scaleNutrient(food.proteinPer100g, servingGrams)),
-    }),
+    () =>
+      scaleNutrients(
+        {
+          kcal: food.caloriesPer100g,
+          carbs_g: food.carbsPer100g,
+          fat_g: food.fatPer100g,
+          protein_g: food.proteinPer100g,
+        },
+        servingGrams
+      ),
     [food, servingGrams]
   );
+  const tooLarge = servingGrams > MAX_SERVING_G;
+  const canSave = servingGrams > 0 && !tooLarge;
 
   const macroSplit = calculateActualMacroPercents(computed.carbsG, computed.fatG, computed.proteinG);
 
@@ -105,7 +112,11 @@ export function PortionCustomizer({ food, onConfirm, onCancel }: Props) {
           />
           <Text style={styles.gramsUnit}>grams</Text>
         </View>
-        <Text style={styles.hint}>Drag the slider or type an exact weight.</Text>
+        <Text style={styles.hint}>
+          {tooLarge
+            ? `Enter ${MAX_SERVING_G.toLocaleString()} g or less.`
+            : "Drag the slider or type an exact weight."}
+        </Text>
       </View>
 
       <View style={styles.card}>
@@ -156,9 +167,9 @@ export function PortionCustomizer({ food, onConfirm, onCancel }: Props) {
           </Pressable>
         )}
         <Pressable
-          style={[styles.actionButton, styles.saveButton, servingGrams <= 0 && styles.saveButtonDisabled]}
+          style={[styles.actionButton, styles.saveButton, !canSave && styles.saveButtonDisabled]}
           onPress={() => onConfirm({ servingGrams, ...computed })}
-          disabled={servingGrams <= 0}
+          disabled={!canSave}
         >
           <Text style={styles.saveText}>Save</Text>
         </Pressable>

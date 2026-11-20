@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -9,8 +9,17 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/lib/auth-context";
-import { upsertProfile } from "@/lib/api";
-import { calculateDailyTarget } from "@/lib/calculations";
+import { getProfile, upsertProfile } from "@/lib/api";
+import {
+  ACTIVITY_LEVELS,
+  DEFAULT_ACTIVITY_LEVEL,
+  DEFAULT_MACRO_SPLIT,
+  MACRO_PRESETS,
+  calculateDailyTarget,
+  macroSplitOf,
+  type ActivityLevel,
+  type MacroSplit,
+} from "@/lib/calculations";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import type { Gender, Goal } from "@/lib/types";
 
@@ -32,8 +41,37 @@ export default function ProfileSetupScreen() {
   const [weightKg, setWeightKg] = useState("");
   const [gender, setGender] = useState<Gender>("female");
   const [goal, setGoal] = useState<Goal>("maintain");
+  const [activity, setActivity] = useState<ActivityLevel>(DEFAULT_ACTIVITY_LEVEL);
+  const [split, setSplit] = useState<MacroSplit>(DEFAULT_MACRO_SPLIT);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // This screen is also "Edit profile" / "Set target": start from the saved values.
+  useEffect(() => {
+    if (!userId) return;
+    getProfile(userId)
+      .then((p) => {
+        if (!p) return;
+        setAge(String(p.age));
+        setHeightCm(String(p.height_cm));
+        setWeightKg(String(p.weight_kg));
+        setGender(p.gender);
+        setGoal(p.goal);
+        setActivity(p.activity_level ?? DEFAULT_ACTIVITY_LEVEL);
+        setSplit(macroSplitOf(p));
+      })
+      .catch(() => {
+        // A new user has no profile yet; the empty form is correct.
+      });
+  }, [userId]);
+
+  const presetKey =
+    MACRO_PRESETS.find(
+      (p) =>
+        p.split.carbPct === split.carbPct &&
+        p.split.fatPct === split.fatPct &&
+        p.split.proteinPct === split.proteinPct
+    )?.key ?? null;
 
   const parsedAge = parseInt(age, 10);
   const parsedHeight = parseFloat(heightCm);
@@ -42,7 +80,7 @@ export default function ProfileSetupScreen() {
     parsedAge > 0 && parsedAge < 120 && parsedHeight > 0 && parsedHeight < 250 && parsedWeight > 0 && parsedWeight < 400;
 
   const previewTarget = valid
-    ? calculateDailyTarget(parsedWeight, parsedHeight, parsedAge, gender, goal)
+    ? calculateDailyTarget(parsedWeight, parsedHeight, parsedAge, gender, goal, activity)
     : null;
 
   async function handleSubmit() {
@@ -53,13 +91,19 @@ export default function ProfileSetupScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      const target = calculateDailyTarget(parsedWeight, parsedHeight, parsedAge, gender, goal);
+      // The database recomputes daily_target_kcal with the same formula; the
+      // value sent here only keeps the request shape older servers expect.
+      const target = calculateDailyTarget(parsedWeight, parsedHeight, parsedAge, gender, goal, activity);
       await upsertProfile(userId, {
         age: parsedAge,
         height_cm: parsedHeight,
         weight_kg: parsedWeight,
         gender,
         goal,
+        activity_level: activity,
+        macro_carb_pct: split.carbPct,
+        macro_fat_pct: split.fatPct,
+        macro_protein_pct: split.proteinPct,
         daily_target_kcal: target,
       });
       router.replace("/(tabs)");
@@ -136,6 +180,38 @@ export default function ProfileSetupScreen() {
         ))}
       </View>
 
+      <Text style={styles.inputLabel}>Activity level</Text>
+      <View style={styles.goalList}>
+        {ACTIVITY_LEVELS.map((a) => (
+          <Pressable
+            key={a.value}
+            style={[styles.goalCard, activity === a.value && styles.goalCardActive]}
+            onPress={() => setActivity(a.value)}
+          >
+            <Text style={styles.goalLabel}>{a.label}</Text>
+            <Text style={styles.goalDescription}>{a.description}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.inputLabel}>Macro balance (carbs / fat / protein)</Text>
+      <View style={styles.chipRow}>
+        {MACRO_PRESETS.map((p) => (
+          <Pressable
+            key={p.key}
+            style={[styles.chip, presetKey === p.key && styles.chipActive]}
+            onPress={() => setSplit(p.split)}
+          >
+            <Text style={[styles.chipText, presetKey === p.key && styles.chipTextActive]}>{p.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {presetKey === null && (
+        <Text style={styles.goalDescription}>
+          Current: {split.carbPct}/{split.fatPct}/{split.proteinPct}
+        </Text>
+      )}
+
       {previewTarget && (
         <View style={styles.previewCard}>
           <Text style={styles.previewLabel}>Your estimated daily target</Text>
@@ -200,7 +276,9 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     borderRadius: radius.pill,
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
     alignItems: "center",
+    justifyContent: "center",
   },
   chipActive: {
     backgroundColor: colors.progressFill,
@@ -209,6 +287,7 @@ const styles = StyleSheet.create({
   chipText: {
     ...typography.label,
     color: colors.textSecondary,
+    textAlign: "center",
   },
   chipTextActive: {
     color: "#0A0A0A",

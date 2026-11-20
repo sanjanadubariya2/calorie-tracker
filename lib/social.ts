@@ -14,8 +14,47 @@ export interface FriendSummary extends PublicProfile {
   daily_target_kcal: number;
 }
 
+/** A pending request, from either side. `user_id` is always the *other* person. */
 export interface PendingRequest extends PublicProfile {
   friendship_id: string;
+}
+
+/** Requests the current user has sent and that are still awaiting a reply. */
+export type OutgoingRequest = PendingRequest;
+
+/**
+ * SQLSTATE codes raised by the friendship functions in
+ * supabase/migrations/003_social_security.sql, plus the unique-violation
+ * code for a duplicate request.
+ */
+export const SOCIAL_ERROR = {
+  notAuthenticated: "28000",
+  invalidArgument: "22023",
+  requestNotFound: "P0002",
+  requestNotPending: "55000",
+  duplicateRequest: "23505",
+} as const;
+
+function errorCode(e: unknown): string | undefined {
+  return typeof e === "object" && e !== null && "code" in e
+    ? String((e as { code: unknown }).code)
+    : undefined;
+}
+
+/** Turns a social RPC/table error into a sentence fit for the UI. */
+export function describeSocialError(e: unknown): string {
+  switch (errorCode(e)) {
+    case SOCIAL_ERROR.requestNotFound:
+      return "That request no longer exists. It may have been cancelled.";
+    case SOCIAL_ERROR.requestNotPending:
+      return "That request has already been answered.";
+    case SOCIAL_ERROR.duplicateRequest:
+      return "There's already a request between you two.";
+    case SOCIAL_ERROR.notAuthenticated:
+      return "You've been signed out. Sign in again and retry.";
+    default:
+      return "Something went wrong. Check your connection and try again.";
+  }
 }
 
 /** Usernames are the public handle, so keep them predictable and URL-safe. */
@@ -83,21 +122,40 @@ export async function findByUsername(username: string): Promise<PublicProfile | 
 export async function sendFriendRequest(userId: string, addresseeId: string): Promise<void> {
   if (MOCK_MODE) return mock.mockSendFriendRequest(addresseeId);
 
+  // Only the two ids are sent. The database grants INSERT on just these
+  // columns, so status always takes its 'pending' default.
   const { error } = await supabase
     .from("friendships")
-    .insert({ requester_id: userId, addressee_id: addresseeId, status: "pending" });
+    .insert({ requester_id: userId, addressee_id: addresseeId });
 
   if (error) throw error;
 }
 
+async function respondToFriendRequest(friendshipId: string, accept: boolean): Promise<void> {
+  const { error } = await supabase.rpc("respond_to_friend_request", {
+    p_request_id: friendshipId,
+    p_accept: accept,
+  });
+  if (error) throw error;
+}
+
+/** Addressee only. Raises P0002 for anyone else, 55000 if already answered. */
 export async function acceptFriendRequest(friendshipId: string): Promise<void> {
   if (MOCK_MODE) return mock.mockAcceptFriendRequest(friendshipId);
+  return respondToFriendRequest(friendshipId, true);
+}
 
-  const { error } = await supabase
-    .from("friendships")
-    .update({ status: "accepted" })
-    .eq("id", friendshipId);
+/** Addressee only. Deletes the request, so the pair can connect again later. */
+export async function declineFriendRequest(friendshipId: string): Promise<void> {
+  if (MOCK_MODE) return mock.mockDeclineFriendRequest(friendshipId);
+  return respondToFriendRequest(friendshipId, false);
+}
 
+/** Requester only, and only while the request is still pending. */
+export async function cancelFriendRequest(friendshipId: string): Promise<void> {
+  if (MOCK_MODE) return mock.mockCancelFriendRequest(friendshipId);
+
+  const { error } = await supabase.rpc("cancel_friend_request", { p_request_id: friendshipId });
   if (error) throw error;
 }
 
@@ -135,4 +193,12 @@ export async function getPendingRequests(): Promise<PendingRequest[]> {
   const { data, error } = await supabase.rpc("get_pending_requests");
   if (error) throw error;
   return (data as PendingRequest[]) ?? [];
+}
+
+export async function getOutgoingRequests(): Promise<OutgoingRequest[]> {
+  if (MOCK_MODE) return mock.mockGetOutgoingRequests();
+
+  const { data, error } = await supabase.rpc("get_outgoing_requests");
+  if (error) throw error;
+  return (data as OutgoingRequest[]) ?? [];
 }

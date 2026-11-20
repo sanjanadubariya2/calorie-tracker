@@ -12,15 +12,24 @@ import {
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/lib/auth-context";
-import { getFoodLogsForDate, getFoodLogsInRange, getProfile, getStreak, rangeEndingOn } from "@/lib/api";
+import { getDailyStatus, getDailyTotals, getProfile, getStreak } from "@/lib/api";
+import { rangeEndingOn, toISODate } from "@/lib/dates";
+import { averageOverLoggedDays } from "@/lib/nutrition";
+import { DEFAULT_TARGET_KCAL } from "@/lib/calculations";
 import {
+  SOCIAL_ERROR,
   acceptFriendRequest,
+  cancelFriendRequest,
+  declineFriendRequest,
+  describeSocialError,
   findByUsername,
   getFriendSummaries,
+  getOutgoingRequests,
   getPendingRequests,
   removeFriendship,
   sendFriendRequest,
   type FriendSummary,
+  type OutgoingRequest,
   type PendingRequest,
 } from "@/lib/social";
 import { buildReportText, shareReport } from "@/lib/shareReport";
@@ -28,12 +37,6 @@ import { Avatar } from "@/components/Avatar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import type { Profile } from "@/lib/types";
-
-function toISODate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
 
 interface MyStats {
   consumed: number;
@@ -53,7 +56,14 @@ export default function FriendsScreen() {
   const [mine, setMine] = useState<MyStats | null>(null);
   const [friends, setFriends] = useState<FriendSummary[]>([]);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
+  const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Friendship id of the request row with an action in flight, so only that
+  // row's buttons disable.
+  const [requestBusy, setRequestBusy] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -66,42 +76,57 @@ export default function FriendsScreen() {
     if (!userId) return;
     const { start, end } = rangeEndingOn(today);
 
-    const [profileData, todayLogs, weekLogs, streakData, friendList, requestList] = await Promise.all([
+    // Social data loads alongside personal stats but fails independently: a
+    // broken friends query shouldn't blank the "me" card, and vice versa.
+    const socialPromise = Promise.allSettled([
+      getFriendSummaries(today),
+      getPendingRequests(),
+      getOutgoingRequests(),
+    ]);
+
+    // Same daily numbers as the dashboard: get_daily_status / get_daily_totals.
+    const [profileData, status, weekRows, streakData] = await Promise.all([
       getProfile(userId),
-      getFoodLogsForDate(userId, today),
-      getFoodLogsInRange(userId, start, end),
+      getDailyStatus(today),
+      getDailyTotals(start, end),
       getStreak(userId),
-      getFriendSummaries(today).catch(() => [] as FriendSummary[]),
-      getPendingRequests().catch(() => [] as PendingRequest[]),
     ]);
 
     setProfile(profileData);
-
-    const totalsByDate = new Map<string, number>();
-    for (const log of weekLogs) {
-      totalsByDate.set(log.logged_date, (totalsByDate.get(log.logged_date) ?? 0) + log.calories);
-    }
-    const dayTotals = [...totalsByDate.values()].filter((v) => v > 0);
-
     setMine({
-      consumed: Math.round(todayLogs.reduce((s, l) => s + l.calories, 0)),
-      target: profileData?.daily_target_kcal ?? 2000,
-      carbsG: Math.round(todayLogs.reduce((s, l) => s + l.carbs_g, 0)),
-      fatG: Math.round(todayLogs.reduce((s, l) => s + l.fat_g, 0)),
-      proteinG: Math.round(todayLogs.reduce((s, l) => s + l.protein_g, 0)),
+      consumed: Math.round(status.consumed.calories),
+      target: status.targetKcal ?? DEFAULT_TARGET_KCAL,
+      carbsG: Math.round(status.consumed.carbsG),
+      fatG: Math.round(status.consumed.fatG),
+      proteinG: Math.round(status.consumed.proteinG),
       streak: streakData?.current_streak ?? 0,
-      weekAvg: dayTotals.length ? dayTotals.reduce((a, b) => a + b, 0) / dayTotals.length : 0,
+      weekAvg: averageOverLoggedDays(weekRows),
     });
 
-    setFriends(friendList);
-    setRequests(requestList);
+    const [friendRes, incomingRes, outgoingRes] = await socialPromise;
+    // On failure keep whatever was already on screen rather than flashing to empty.
+    if (friendRes.status === "fulfilled") setFriends(friendRes.value);
+    if (incomingRes.status === "fulfilled") setRequests(incomingRes.value);
+    if (outgoingRes.status === "fulfilled") setOutgoing(outgoingRes.value);
+
+    const socialFailed = [friendRes, incomingRes, outgoingRes].some((r) => r.status === "rejected");
+    setLoadError(socialFailed ? "Couldn't load your friends and requests. Pull down to retry." : null);
   }, [userId, today]);
+
+  // load() rejects only when the personal-stats queries fail.
+  const safeLoad = useCallback(
+    () =>
+      load().catch(() => {
+        setLoadError("Couldn't load your progress. Pull down to retry.");
+      }),
+    [load]
+  );
 
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      load().finally(() => setLoading(false));
-    }, [load])
+      safeLoad().finally(() => setLoading(false));
+    }, [safeLoad])
   );
 
   async function handleSearch() {
@@ -118,16 +143,26 @@ export default function FriendsScreen() {
         setSearchMessage(`You're already connected with @${found.username}.`);
         return;
       }
+      if (outgoing.some((r) => r.user_id === found.user_id)) {
+        setSearchMessage(`You've already sent @${found.username} a request.`);
+        return;
+      }
+      if (requests.some((r) => r.user_id === found.user_id)) {
+        setSearchMessage(`@${found.username} has already sent you a request. Accept it below.`);
+        return;
+      }
       await sendFriendRequest(userId, found.user_id);
       setSearchMessage(`Request sent to @${found.username}.`);
       setSearch("");
-      await load();
+      await safeLoad();
     } catch (e) {
-      const message = (e as Error).message ?? "";
+      // The pair index rejects a second request in either direction, even one
+      // this screen hasn't loaded yet.
+      const code = (e as { code?: string }).code;
       setSearchMessage(
-        message.includes("duplicate") || message.includes("unique")
-          ? "You've already sent this person a request."
-          : "Couldn't send that request. Try again."
+        code === SOCIAL_ERROR.duplicateRequest
+          ? "There's already a request between you two. Pull down to refresh."
+          : describeSocialError(e)
       );
     } finally {
       setSearching(false);
@@ -160,9 +195,31 @@ export default function FriendsScreen() {
 
   async function handleRemove() {
     if (!userId || !pendingRemove) return;
-    await removeFriendship(pendingRemove.user_id, userId);
-    setPendingRemove(null);
-    await load();
+    setRemoveError(null);
+    try {
+      await removeFriendship(pendingRemove.user_id, userId);
+    } catch (e) {
+      setRemoveError(describeSocialError(e));
+    } finally {
+      setPendingRemove(null);
+    }
+    await safeLoad();
+  }
+
+  // Accept, decline, and cancel share this wrapper: one row busy at a time,
+  // the error shown inline, and a reload either way. After a stale-request
+  // error (P0002/55000) the reload drops the row that no longer applies.
+  async function runRequestAction(friendshipId: string, action: () => Promise<void>) {
+    setRequestBusy(friendshipId);
+    setRequestError(null);
+    try {
+      await action();
+    } catch (e) {
+      setRequestError(describeSocialError(e));
+    } finally {
+      await safeLoad();
+      setRequestBusy(null);
+    }
   }
 
   const needsUsername = !profile?.username;
@@ -186,13 +243,14 @@ export default function FriendsScreen() {
           refreshing={refreshing}
           onRefresh={async () => {
             setRefreshing(true);
-            await load();
+            await safeLoad();
             setRefreshing(false);
           }}
         />
       }
     >
       <Text style={styles.screenTitle}>Friends</Text>
+      {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
 
       {loading ? (
         <View style={styles.centerBlock}>
@@ -290,29 +348,78 @@ export default function FriendsScreen() {
             </View>
           )}
 
+          {requestError ? <Text style={styles.errorText}>{requestError}</Text> : null}
+
           {requests.length > 0 && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Requests</Text>
-              {requests.map((r) => (
-                <View key={r.friendship_id} style={styles.requestRow}>
-                  <Avatar seed={r.user_id} photoUrl={r.avatar_url} label={r.username ?? "?"} />
-                  <Text style={styles.requestName}>@{r.username}</Text>
-                  <Pressable
-                    style={styles.acceptButton}
-                    onPress={async () => {
-                      await acceptFriendRequest(r.friendship_id);
-                      await load();
-                    }}
-                  >
-                    <Text style={styles.acceptButtonText}>Accept</Text>
-                  </Pressable>
-                </View>
-              ))}
+              {requests.map((r) => {
+                const busy = requestBusy === r.friendship_id;
+                return (
+                  <View key={r.friendship_id} style={styles.requestRow}>
+                    <Avatar seed={r.user_id} photoUrl={r.avatar_url} label={r.username ?? "?"} />
+                    <Text style={styles.requestName} numberOfLines={1}>
+                      {displayName(r.username)}
+                    </Text>
+                    <Pressable
+                      style={[styles.secondaryButton, busy && styles.disabled]}
+                      disabled={requestBusy !== null}
+                      onPress={() =>
+                        runRequestAction(r.friendship_id, () => declineFriendRequest(r.friendship_id))
+                      }
+                      accessibilityLabel={`Decline request from ${displayName(r.username)}`}
+                    >
+                      <Text style={styles.secondaryButtonText}>Decline</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.acceptButton, busy && styles.disabled]}
+                      disabled={requestBusy !== null}
+                      onPress={() =>
+                        runRequestAction(r.friendship_id, () => acceptFriendRequest(r.friendship_id))
+                      }
+                      accessibilityLabel={`Accept request from ${displayName(r.username)}`}
+                    >
+                      <Text style={styles.acceptButtonText}>{busy ? "…" : "Accept"}</Text>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {outgoing.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Sent requests</Text>
+              {outgoing.map((r) => {
+                const busy = requestBusy === r.friendship_id;
+                return (
+                  <View key={r.friendship_id} style={styles.requestRow}>
+                    <Avatar seed={r.user_id} photoUrl={r.avatar_url} label={r.username ?? "?"} />
+                    <View style={styles.requestText}>
+                      <Text style={styles.requestName} numberOfLines={1}>
+                        {displayName(r.username)}
+                      </Text>
+                      <Text style={styles.requestMeta}>Waiting for a reply</Text>
+                    </View>
+                    <Pressable
+                      style={[styles.secondaryButton, busy && styles.disabled]}
+                      disabled={requestBusy !== null}
+                      onPress={() =>
+                        runRequestAction(r.friendship_id, () => cancelFriendRequest(r.friendship_id))
+                      }
+                      accessibilityLabel={`Cancel request to ${displayName(r.username)}`}
+                    >
+                      <Text style={styles.secondaryButtonText}>{busy ? "…" : "Cancel"}</Text>
+                    </Pressable>
+                  </View>
+                );
+              })}
             </View>
           )}
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Today's progress</Text>
+            {removeError ? <Text style={styles.searchMessage}>{removeError}</Text> : null}
 
             {leaderboard.length === 0 ? (
               <View style={styles.emptyBlock}>
@@ -372,6 +479,10 @@ export default function FriendsScreen() {
       />
     </ScrollView>
   );
+}
+
+function displayName(username: string | null): string {
+  return username ? `@${username}` : "Unknown user";
 }
 
 function ProgressRow({
@@ -509,6 +620,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   requestName: { ...typography.body, color: colors.textPrimary, flex: 1 },
+  requestText: { flex: 1 },
+  requestMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  secondaryButtonText: { ...typography.label, color: colors.textPrimary },
+  errorText: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },
   acceptButton: {
     backgroundColor: colors.progressFill,
     borderRadius: radius.pill,

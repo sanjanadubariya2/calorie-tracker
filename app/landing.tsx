@@ -1,5 +1,5 @@
 import React from "react";
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
