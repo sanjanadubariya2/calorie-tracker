@@ -1,0 +1,3 @@
+# Offline data tools (python -m app.cli load-indb). Not needed by the API server.
+-r requirements.txt
+openpyxl==3.1.5

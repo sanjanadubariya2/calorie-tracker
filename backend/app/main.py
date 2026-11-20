@@ -18,16 +18,24 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import daily_status, health
+from app.api.routes import daily_status, foods, health, meal_images, recognition
 from app.core.config import Environment, Settings, get_settings
 from app.core.security import JwksCache, TokenVerifier
+from app.db.storage import SupabaseStorage
 from app.db.supabase import DatabaseError, DatabaseUnavailable, SupabaseRest
+from app.services.catalogue.importer import OffImporter, _SlidingWindow
+from app.services.recognition.providers import RecognitionProvider, build_provider
 
 logger = logging.getLogger("app")
 
 
-def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTransport | None = None) -> FastAPI:
-    """`transport` lets tests replace the network (Supabase JWKS and REST)."""
+def create_app(
+    settings: Settings | None = None,
+    transport: httpx.AsyncBaseTransport | None = None,
+    recognizer: RecognitionProvider | None = None,
+) -> FastAPI:
+    """`transport` lets tests replace the network (Supabase JWKS and REST);
+    `recognizer` replaces the AI provider (tests use a fake)."""
     settings = settings or get_settings()
 
     @asynccontextmanager
@@ -37,7 +45,17 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
                 settings, JwksCache(settings.jwks_url, http, settings.jwks_cache_seconds)
             )
             app.state.db = SupabaseRest(settings, http)
-            yield
+            app.state.storage = SupabaseStorage(settings, http)
+            app.state.off_importer = OffImporter(settings, http)
+            app.state.settings = settings
+            app.state.recognizer = recognizer or build_provider(settings)
+            app.state.recognition_limiter = _SlidingWindow(settings.recognitions_per_user_per_hour, 3600)
+            try:
+                yield
+            finally:
+                close = getattr(app.state.recognizer, "aclose", None)
+                if close is not None:
+                    await close()
 
     is_prod = settings.environment is Environment.production
     app = FastAPI(
@@ -55,7 +73,7 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
         allow_credentials=False,  # bearer tokens, not cookies
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -75,6 +93,16 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
             )
         return JSONResponse({"detail": "The database could not complete the request."}, status.HTTP_502_BAD_GATEWAY)
 
+    try:
+        import psycopg
+
+        @app.exception_handler(psycopg.Error)
+        async def _catalogue_db_error(_: Request, exc: psycopg.Error) -> JSONResponse:
+            logger.warning("Catalogue database error: %s", type(exc).__name__)
+            return JSONResponse({"detail": "The food catalogue could not be updated."}, status.HTTP_502_BAD_GATEWAY)
+    except ImportError:  # pragma: no cover - psycopg is a runtime dependency
+        pass
+
     @app.exception_handler(Exception)
     async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled error: %s", type(exc).__name__)
@@ -82,4 +110,7 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
 
     app.include_router(health.router)
     app.include_router(daily_status.router)
+    app.include_router(foods.router)
+    app.include_router(meal_images.router)
+    app.include_router(recognition.router)
     return app

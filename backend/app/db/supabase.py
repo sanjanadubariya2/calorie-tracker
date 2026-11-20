@@ -45,25 +45,42 @@ class SupabaseRest:
         self._http = http
         self._timeout = settings.upstream_timeout_seconds
 
-    async def rpc(self, user: AuthenticatedUser, function: str, params: dict[str, Any]) -> Any:
-        """Calls a Postgres function as `user` and returns the decoded JSON."""
+    def _headers(self, user: AuthenticatedUser, extra: dict[str, str] | None = None) -> dict[str, str]:
+        return {
+            "apikey": self._apikey,
+            "Authorization": f"Bearer {user.access_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            **(extra or {}),
+        }
+
+    async def _request(
+        self,
+        user: AuthenticatedUser,
+        method: str,
+        path: str,
+        *,
+        label: str,
+        json: Any = None,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> Any:
         try:
-            response = await self._http.post(
-                f"{self._base}/rpc/{function}",
-                json=params,
-                headers={
-                    "apikey": self._apikey,
-                    "Authorization": f"Bearer {user.access_token}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+            response = await self._http.request(
+                method,
+                f"{self._base}/{path}",
+                json=json,
+                params=params,
+                headers=self._headers(user, headers),
                 timeout=self._timeout,
             )
         except httpx.HTTPError as exc:
-            logger.error("Supabase RPC %s unreachable: %s", function, type(exc).__name__)
+            logger.error("Supabase %s unreachable: %s", label, type(exc).__name__)
             raise DatabaseUnavailable() from exc
 
         if response.is_success:
+            if response.status_code == 204 or not response.content:
+                return None
             return response.json()
 
         code: str | None = None
@@ -74,5 +91,30 @@ class SupabaseRest:
             message = body.get("message", "")
         except ValueError:
             message = response.text[:200]
-        logger.warning("Supabase RPC %s failed: HTTP %s code=%s", function, response.status_code, code)
+        logger.warning("Supabase %s failed: HTTP %s code=%s", label, response.status_code, code)
         raise DatabaseError(response.status_code, code, message)
+
+    async def rpc(self, user: AuthenticatedUser, function: str, params: dict[str, Any]) -> Any:
+        """Calls a Postgres function as `user` and returns the decoded JSON."""
+        return await self._request(user, "POST", f"rpc/{function}", label=f"RPC {function}", json=params)
+
+    async def select(self, user: AuthenticatedUser, table: str, params: dict[str, str]) -> list[dict[str, Any]]:
+        """GET /<table>?<params> as `user` (PostgREST filter syntax)."""
+        return await self._request(user, "GET", table, label=f"select {table}", params=params) or []
+
+    async def insert(self, user: AuthenticatedUser, table: str, row: dict[str, Any]) -> dict[str, Any]:
+        """Inserts one row as `user` and returns it."""
+        rows = await self._request(
+            user, "POST", table, label=f"insert {table}", json=row,
+            headers={"Prefer": "return=representation"},
+        )
+        if not isinstance(rows, list) or len(rows) != 1:
+            raise DatabaseError(502, None, f"insert {table} returned an unexpected shape")
+        return rows[0]
+
+    async def delete(self, user: AuthenticatedUser, table: str, params: dict[str, str]) -> list[dict[str, Any]]:
+        """Deletes matching rows as `user` and returns the deleted rows."""
+        return await self._request(
+            user, "DELETE", table, label=f"delete {table}", params=params,
+            headers={"Prefer": "return=representation"},
+        ) or []

@@ -23,3 +23,6 @@ npm-debug.*
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Licensed nutrition dataset (loaded with `python -m app.cli load-indb`); never commit it
+Anuvaad_INDB_*.xlsx

@@ -65,20 +65,39 @@ class FakeSupabase:
     jwks: dict[str, Any]
     requests: list[httpx.Request] = field(default_factory=list)
     rpc_handler: Callable[[httpx.Request], httpx.Response] | None = None
+    rest_handler: Callable[[httpx.Request], httpx.Response] | None = None
+    storage_handler: Callable[[httpx.Request], httpx.Response] | None = None
+    off_handler: Callable[[httpx.Request], httpx.Response] | None = None
     jwks_fetches: int = 0
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
-        if request.url.path == "/auth/v1/.well-known/jwks.json":
+        path = request.url.path
+        if path == "/auth/v1/.well-known/jwks.json":
             self.jwks_fetches += 1
             return httpx.Response(200, json=self.jwks)
-        if request.url.path.startswith("/rest/v1/rpc/") and self.rpc_handler:
+        if path.startswith("/rest/v1/rpc/") and self.rpc_handler:
             return self.rpc_handler(request)
+        if path.startswith("/rest/v1/") and not path.startswith("/rest/v1/rpc/") and self.rest_handler:
+            return self.rest_handler(request)
+        if path.startswith("/storage/v1/") and self.storage_handler:
+            return self.storage_handler(request)
+        if request.url.host == "world.openfoodfacts.org" and self.off_handler:
+            return self.off_handler(request)
         return httpx.Response(404, json={"message": "not found"})
 
     @property
     def rpc_requests(self) -> list[httpx.Request]:
         return [r for r in self.requests if r.url.path.startswith("/rest/v1/rpc/")]
+
+    @property
+    def storage_requests(self) -> list[httpx.Request]:
+        return [r for r in self.requests if r.url.path.startswith("/storage/v1/")]
+
+    @property
+    def rest_requests(self) -> list[httpx.Request]:
+        return [r for r in self.requests
+                if r.url.path.startswith("/rest/v1/") and not r.url.path.startswith("/rest/v1/rpc/")]
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -63,6 +63,37 @@ class Settings(BaseSettings):
     # Upstream timeout for Supabase calls.
     upstream_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
 
+    # Food catalogue writes (migration 008). A Postgres URL for the
+    # `catalogue_writer` role, e.g.
+    # postgresql://catalogue_writer.<project-ref>:<password>@<pooler-host>:5432/postgres
+    # Optional: without it, Open Food Facts import is disabled (503) and matching
+    # still works. Never the service-role key or the postgres superuser.
+    catalogue_database_url: SecretStr | None = None
+    # Open Food Facts product API used for server-side imports.
+    off_api_url: str = "https://world.openfoodfacts.org/api/v2/product"
+    off_imports_per_user_per_hour: int = Field(default=30, ge=1, le=1000)
+
+    # Meal images (migration 009).
+    meal_images_bucket: str = "meal-images"
+    meal_image_max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1024, le=25 * 1024 * 1024)
+    meal_image_max_dimension: int = Field(default=2048, ge=256, le=4096)
+    meal_image_signed_url_seconds: int = Field(default=300, ge=30, le=3600)
+
+    # AI food recognition. The provider key lives only here (never in the app).
+    # Without a key, recognition endpoints answer 503 and everything else works.
+    recognition_provider: Literal["gemini", "disabled"] = "gemini"
+    gemini_api_key: SecretStr | None = None
+    # A stable Gemini model with image input and structured output.
+    recognition_model: str = "gemini-3.8-flash"
+    # Tried in order when the main model is overloaded or too slow (comma-separated).
+    recognition_fallback_models: str = "gemini-3.5-flash-lite"
+    # Gemini thinking level (gemini-3.8-flash accepts low, medium, high).
+    recognition_effort: Literal["low", "medium", "high"] = "medium"
+    recognition_timeout_seconds: float = Field(default=30.0, gt=0, le=300)  # per model
+    recognitions_per_user_per_hour: int = Field(default=30, ge=1, le=1000)
+    recognition_max_items: int = Field(default=12, ge=1, le=30)
+    recognition_max_text_chars: int = Field(default=1000, ge=50, le=5000)
+
     _split_algorithms = field_validator("supabase_jwt_algorithms", mode="before")(_split_csv)
     _split_origins = field_validator("allowed_origins", mode="before")(_split_csv)
 
@@ -107,6 +138,10 @@ class Settings(BaseSettings):
     @property
     def rest_url(self) -> str:
         return f"{self.supabase_url}/rest/v1"
+
+    @property
+    def storage_url(self) -> str:
+        return f"{self.supabase_url}/storage/v1"
 
 
 @lru_cache

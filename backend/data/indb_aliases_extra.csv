@@ -1,0 +1,96 @@
+food_code,alias,kind
+# Everyday names that INDB's own names don't contain. Names only — never
+# nutrition values. Each mapping points at the INDB dish users most likely mean;
+# where the everyday name covers several dishes (e.g. "dal"), no alias is added
+# and matching returns the options instead.
+ASC096,phulka,synonym
+ASC096,fulka,synonym
+ASC096,rotli,regional
+ASC096,chapathi,misspelling
+ASC096,chappati,misspelling
+ASC096,wheat roti,common_name
+ASC096,plain roti,common_name
+ASC097,paratha,common_name
+ASC097,parotha,misspelling
+ASC098,aloo paratha,common_name
+ASC098,aloo parantha,common_name
+ASC107,puri,synonym
+ASC142,nan,misspelling
+ASC113,rice,common_name
+ASC113,plain rice,common_name
+ASC113,steamed rice,common_name
+ASC113,cooked rice,common_name
+ASC113,white rice,common_name
+ASC113,chawal,regional
+ASC114,pulao,common_name
+ASC114,pulav,misspelling
+ASC123,veg biryani,common_name
+ASC123,vegetable biryani,common_name
+BFP134,jeera rice,common_name
+BFP144,khichdi,common_name
+BFP144,khichri,common_name
+ASC151,moong dal,common_name
+ASC151,yellow moong dal,common_name
+ASC157,masoor dal,common_name
+OSR139,dal makhni,misspelling
+OSR139,maa ki dal,regional
+ASC162,chole,common_name
+ASC162,chhole,common_name
+ASC162,chana masala,common_name
+ASC162,chole masala,common_name
+ASC162,white chana curry,common_name
+ASC165,rajma,common_name
+ASC165,rajma masala,common_name
+ASC165,rajma curry,common_name
+ASC167,sambhar,misspelling
+ASC167,sambaar,misspelling
+ASC168,kadhi,common_name
+ASC168,kadhi pakora,common_name
+ASC168,kadhi pakoda,common_name
+ASC144,idly,misspelling
+ASC144,idli sambar,common_name
+BFP148,dosa,common_name
+BFP148,sada dosa,regional
+BFP148,dosai,regional
+ASC146,masala dosai,regional
+BFP436,medu vada,common_name
+BFP436,vada,common_name
+BFP436,uddina vada,regional
+ASC378,dal vada,common_name
+BFP044,pohe,regional
+BFP044,aval,regional
+ASC474,khaman dhokla,common_name
+ASC361,samosa,common_name
+ASC361,aloo samosa,common_name
+ASC222,paneer butter masala,common_name
+ASC222,paneer makhani,common_name
+ASC222,butter paneer,common_name
+ASC215,palak paneer,common_name
+ASC242,murgh makhani,regional
+ASC242,chicken makhani,common_name
+ASC240,chicken masala,common_name
+BFP240,anda curry,regional
+ASC059,egg bhurji,common_name
+ASC059,anda bhurji,regional
+ASC056,egg boiled,common_name
+ASC061,omelette,common_name
+ASC061,omelet,misspelling
+ASC171,aloo gobi,common_name
+ASC171,aloo gobhi,common_name
+ASC177,baingan bharta,common_name
+ASC178,aloo sabzi,common_name
+ASC178,aloo ki sabzi,common_name
+ASC001,chai,common_name
+ASC001,tea,common_name
+ASC001,masala chai,common_name
+ASC001,cutting chai,regional
+ASC021,lassi,common_name
+ASC021,sweet lassi,common_name
+ASC022,salted lassi,common_name
+ASC282,kheer,common_name
+ASC282,chawal ki kheer,regional
+ASC293,sheera,regional
+ASC293,suji halwa,common_name
+ASC295,gajar halwa,common_name
+ASC348,gulab jamun,common_name
+OSR112,pao bhaji,misspelling

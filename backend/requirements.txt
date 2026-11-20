@@ -4,3 +4,9 @@ uvicorn[standard]==0.34.0
 pydantic-settings==2.7.1
 httpx==0.28.1
 PyJWT[crypto]==2.10.1
+# Catalogue writes (catalogue_writer role) — Open Food Facts import and CLI tools.
+psycopg[binary]==3.2.3
+# Meal image validation and re-encoding.
+Pillow==11.0.0
+# AI food recognition (provider: Google Gemini). Credentials only on the backend.
+google-genai==2.25.0

@@ -1,4 +1,6 @@
 // lib/backend.ts and its use by getDailyStatus. Supabase and fetch are mocked.
+// A module (not a global script), so helpers don't collide across test files.
+export {};
 
 type Session = { access_token: string } | null;
 

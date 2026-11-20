@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "db:start": "supabase start -x realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
+    "db:start": "supabase start -x realtime,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
     "db:stop": "supabase stop",
     "test:db": "supabase test db",
     "types:gen": "supabase gen types typescript --local --schema public > lib/database.types.ts",
@@ -52,6 +52,9 @@
   "jest": {
     "preset": "jest-expo",
     "globalSetup": "./jest.global-setup.js",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
     "setupFiles": [
       "./jest.setup.js"
     ],

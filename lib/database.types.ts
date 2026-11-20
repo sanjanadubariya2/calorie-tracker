@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      food_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          food_id: string
+          id: string
+          kind: string
+          normalized_alias: string | null
+          source: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          food_id: string
+          id?: string
+          kind?: string
+          normalized_alias?: string | null
+          source?: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          food_id?: string
+          id?: string
+          kind?: string
+          normalized_alias?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_aliases_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_logs: {
         Row: {
           ai_confidence: number | null
@@ -67,6 +105,163 @@ export type Database = {
           source_ref?: string | null
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "food_logs_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_servings: {
+        Row: {
+          created_at: string
+          food_id: string
+          grams: number
+          id: string
+          is_default: boolean
+          label: string
+          ml: number | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          food_id: string
+          grams: number
+          id?: string
+          is_default?: boolean
+          label: string
+          ml?: number | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          food_id?: string
+          grams?: number
+          id?: string
+          is_default?: boolean
+          label?: string
+          ml?: number | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_servings_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foods: {
+        Row: {
+          basis: string
+          brand: string | null
+          carbs_g_per_100: number | null
+          category: string | null
+          completeness: number
+          created_at: string
+          cuisine_tags: string[]
+          density_g_per_ml: number | null
+          fat_g_per_100: number | null
+          fiber_g_per_100: number | null
+          food_kind: string
+          id: string
+          is_active: boolean
+          is_matchable: boolean | null
+          kcal_per_100: number | null
+          micronutrients: Json | null
+          name: string
+          normalized_brand: string | null
+          normalized_name: string | null
+          protein_g_per_100: number | null
+          quality_flags: string[]
+          salt_g_per_100: number | null
+          saturated_fat_g_per_100: number | null
+          search_tsv: unknown
+          sodium_g_per_100: number | null
+          source: string
+          source_ref: string | null
+          source_retrieved_at: string | null
+          source_version: string | null
+          sugars_g_per_100: number | null
+          updated_at: string
+          variant_group: string | null
+          verification: string
+        }
+        Insert: {
+          basis?: string
+          brand?: string | null
+          carbs_g_per_100?: number | null
+          category?: string | null
+          completeness?: number
+          created_at?: string
+          cuisine_tags?: string[]
+          density_g_per_ml?: number | null
+          fat_g_per_100?: number | null
+          fiber_g_per_100?: number | null
+          food_kind?: string
+          id?: string
+          is_active?: boolean
+          is_matchable?: boolean | null
+          kcal_per_100?: number | null
+          micronutrients?: Json | null
+          name: string
+          normalized_brand?: string | null
+          normalized_name?: string | null
+          protein_g_per_100?: number | null
+          quality_flags?: string[]
+          salt_g_per_100?: number | null
+          saturated_fat_g_per_100?: number | null
+          search_tsv?: unknown
+          sodium_g_per_100?: number | null
+          source: string
+          source_ref?: string | null
+          source_retrieved_at?: string | null
+          source_version?: string | null
+          sugars_g_per_100?: number | null
+          updated_at?: string
+          variant_group?: string | null
+          verification?: string
+        }
+        Update: {
+          basis?: string
+          brand?: string | null
+          carbs_g_per_100?: number | null
+          category?: string | null
+          completeness?: number
+          created_at?: string
+          cuisine_tags?: string[]
+          density_g_per_ml?: number | null
+          fat_g_per_100?: number | null
+          fiber_g_per_100?: number | null
+          food_kind?: string
+          id?: string
+          is_active?: boolean
+          is_matchable?: boolean | null
+          kcal_per_100?: number | null
+          micronutrients?: Json | null
+          name?: string
+          normalized_brand?: string | null
+          normalized_name?: string | null
+          protein_g_per_100?: number | null
+          quality_flags?: string[]
+          salt_g_per_100?: number | null
+          saturated_fat_g_per_100?: number | null
+          search_tsv?: unknown
+          sodium_g_per_100?: number | null
+          source?: string
+          source_ref?: string | null
+          source_retrieved_at?: string | null
+          source_version?: string | null
+          sugars_g_per_100?: number | null
+          updated_at?: string
+          variant_group?: string | null
+          verification?: string
+        }
         Relationships: []
       }
       friendships: {
@@ -90,6 +285,48 @@ export type Database = {
           id?: string
           requester_id?: string
           status?: string
+        }
+        Relationships: []
+      }
+      meal_images: {
+        Row: {
+          created_at: string
+          expires_at: string
+          height: number
+          id: string
+          mime_type: string
+          sha256: string
+          size_bytes: number
+          status: string
+          storage_path: string
+          user_id: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          height: number
+          id?: string
+          mime_type?: string
+          sha256: string
+          size_bytes: number
+          status?: string
+          storage_path: string
+          user_id?: string
+          width: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          height?: number
+          id?: string
+          mime_type?: string
+          sha256?: string
+          size_bytes?: number
+          status?: string
+          storage_path?: string
+          user_id?: string
+          width?: number
         }
         Relationships: []
       }
@@ -252,6 +489,21 @@ export type Database = {
           username: string
         }[]
       }
+      food_portion: {
+        Args: { p_food_id: string; p_grams: number }
+        Returns: {
+          calories: number
+          carbs_g: number
+          fat_g: number
+          food_id: string
+          nutrients_per_100g: Json
+          protein_g: number
+        }[]
+      }
+      food_snapshot_per_100g: {
+        Args: { f: Database["public"]["Tables"]["foods"]["Row"] }
+        Returns: Json
+      }
       get_daily_status: {
         Args: { p_date?: string }
         Returns: {
@@ -327,6 +579,7 @@ export type Database = {
           username: string
         }[]
       }
+      is_valid_micronutrients: { Args: { p: Json }; Returns: boolean }
       is_valid_nutrients_per_100g: { Args: { p: Json }; Returns: boolean }
       is_valid_timezone: { Args: { p_tz: string }; Returns: boolean }
       macro_targets: {
@@ -338,6 +591,18 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      normalize_brand: { Args: { p: string }; Returns: string }
+      normalize_food_name: { Args: { p: string }; Returns: string }
+      portion_nutrition: {
+        Args: {
+          p_carbs_g_per_100g: number
+          p_fat_g_per_100g: number
+          p_grams: number
+          p_kcal_per_100g: number
+          p_protein_g_per_100g: number
+        }
+        Returns: Record<string, unknown>
+      }
       recalculate_user_streak: {
         Args: { p_reset_badges?: boolean; p_user: string }
         Returns: undefined
@@ -345,6 +610,48 @@ export type Database = {
       respond_to_friend_request: {
         Args: { p_accept: boolean; p_request_id: string }
         Returns: undefined
+      }
+      search_food_catalogue: {
+        Args: {
+          p_brand?: string
+          p_limit?: number
+          p_quantity?: number
+          p_query: string
+          p_unit?: string
+        }
+        Returns: {
+          basis: string
+          brand: string
+          carbs_g_per_100: number
+          category: string
+          completeness: number
+          default_serving_g: number
+          default_serving_label: string
+          density_g_per_ml: number
+          fat_g_per_100: number
+          fiber_g_per_100: number
+          food_id: string
+          food_kind: string
+          kcal_per_100: number
+          match_type: string
+          matched_text: string
+          name: string
+          name_score: number
+          portion_carbs_g: number
+          portion_fat_g: number
+          portion_grams: number
+          portion_kcal: number
+          portion_protein_g: number
+          protein_g_per_100: number
+          quality_flags: string[]
+          saturated_fat_g_per_100: number
+          score: number
+          sodium_g_per_100: number
+          source: string
+          source_ref: string
+          sugars_g_per_100: number
+          verification: string
+        }[]
       }
       streak_milestone_count: { Args: { p_days: number }; Returns: number }
       user_today_bounds: {

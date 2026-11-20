@@ -1,0 +1,82 @@
+query,brand,expect,expected_code,note
+roti,,match,ASC096,
+chapati,,match,ASC096,
+Chapathi,,match,ASC096,misspelling
+phulka,,match,ASC096,synonym
+2 rotis,,match,ASC096,quantity + plural
+paratha,,match,ASC097,
+aloo paratha,,match,ASC098,
+aloo ka paratha,,match,ASC098,hindi
+poori,,match,ASC107,
+puri,,match,ASC107,
+naan,,match,ASC142,
+rice,,match,ASC113,
+steamed rice,,match,ASC113,
+jeera rice,,match,BFP134,
+pulao,,match,ASC114,
+veg pulao,,match,ASC115,
+veg biryani,,match,ASC123,
+mutton biryani,,match,ASC122,
+khichdi,,match,BFP144,
+moong dal,,match,ASC151,
+masoor dal,,match,ASC157,
+dal makhani,,match,OSR139,
+chole,,match,ASC162,
+chana masala,,match,ASC162,
+rajma,,match,ASC165,
+rajma curry,,match,ASC165,
+sambar,,match,ASC167,
+sambhar,,match,ASC167,misspelling
+kadhi,,match,ASC168,
+idli,,match,ASC144,
+idly,,match,ASC144,misspelling
+2 idlis,,match,ASC144,quantity + plural
+dosa,,match,BFP148,
+plain dosa,,match,BFP148,
+masala dosa,,match,ASC146,
+medu vada,,match,BFP436,
+uttapam,,match,BFP152,
+upma,,match,BFP039,several upmas: expected in top 3
+rava upma,,match,BFP039,
+poha,,match,BFP044,
+dhokla,,match,ASC474,
+samosa,,match,ASC361,
+bhel puri,,match,OSR114,
+besan chilla,,match,OSR100,
+methi thepla,,match,OSR104,
+Paneer Butter Masala,,match,ASC222,case
+paneer butter masala,,match,ASC222,
+panner butter masala,,match,ASC222,misspelling
+paneer makhani,,match,ASC222,
+palak paneer,,match,ASC215,
+butter chicken,,match,ASC242,
+chicken curry,,match,ASC240,
+egg curry,,match,BFP240,
+anda curry,,match,BFP240,hindi
+egg bhurji,,match,ASC059,
+boiled egg,,match,ASC056,
+omelette,,match,ASC061,
+aloo gobi,,match,ASC171,
+baingan bharta,,match,ASC177,
+bhindi sabzi,,match,BFP269,
+bhindi fry,,match,BFP269,
+curd rice,,match,ASC126,
+lemon rice,,match,ASC124,
+coconut chutney,,match,ASC386,
+rasam,,match,BFP176,two rasams: expected in top 3
+pav bhaji,,match,OSR112,
+chai,,match,ASC001,
+masala chai,,match,ASC001,
+tea,,match,ASC001,
+lassi,,match,ASC021,
+gulab jamun,,match,ASC348,
+kheer,,match,ASC282,
+gajar halwa,,match,ASC295,
+suji halwa,,match,ASC293,
+homemade dal makhani 200g,,match,OSR139,filler + quantity
+jalebi,,not_confident,,not in INDB: must not be a confident wrong match
+pongal,,not_confident,,not in INDB
+chaas,,not_confident,,not in INDB
+chicken biryani,,not_confident,,not in INDB (only mutton/veg)
+xyzzy food,,not_confident,,nonsense
+dal,,not_confident,,generic: many dals, should be ambiguous

@@ -32,7 +32,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Calorie Tracker to access your photos so you can set a profile picture."
+          "photosPermission": "Allow Calorie Tracker to access your photos so you can set a profile picture or log a meal from a photo.",
+          "cameraPermission": "Allow Calorie Tracker to use the camera so you can photograph a meal to log it."
         }
       ],
       [

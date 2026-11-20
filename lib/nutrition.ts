@@ -21,6 +21,8 @@ export type FoodSource =
   | "quick_add"
   | "relog"
   | "ai_assisted"
+  /** Picked from the food catalogue (migration 007). */
+  | "catalogue"
   | "unknown";
 
 /**

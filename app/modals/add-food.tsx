@@ -9,9 +9,16 @@ import { snapshotFromSearchResult } from "@/lib/nutrition";
 import type { FoodSearchResult, NewFoodLog } from "@/lib/types";
 import { FoodSearchTab } from "@/components/FoodSearchTab";
 import { QuickAddTab } from "@/components/QuickAddTab";
+import { RecognitionTab } from "@/components/RecognitionTab";
 import { MEAL_SLOTS, colors, isMealType, radius, spacing, typography, type MealType } from "@/constants/theme";
 
-type Tab = "search" | "quickAdd";
+type Tab = "search" | "recognize" | "quickAdd";
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "search", label: "Search" },
+  { key: "recognize", label: "Photo / Text" },
+  { key: "quickAdd", label: "Quick Add" },
+];
 
 export default function AddFoodModal() {
   const { userId } = useAuth();
@@ -122,18 +129,16 @@ export default function AddFoodModal() {
       </View>
 
       <View style={styles.tabRow}>
-        <Pressable
-          style={[styles.tabButton, tab === "search" && styles.tabButtonActive]}
-          onPress={() => setTab("search")}
-        >
-          <Text style={[styles.tabText, tab === "search" && styles.tabTextActive]}>Search</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tabButton, tab === "quickAdd" && styles.tabButtonActive]}
-          onPress={() => setTab("quickAdd")}
-        >
-          <Text style={[styles.tabText, tab === "quickAdd" && styles.tabTextActive]}>Quick Add</Text>
-        </Pressable>
+        {TABS.map((t) => (
+          <Pressable
+            key={t.key}
+            style={[styles.tabButton, tab === t.key && styles.tabButtonActive]}
+            onPress={() => setTab(t.key)}
+            testID={`tab-${t.key}`}
+          >
+            <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>{t.label}</Text>
+          </Pressable>
+        ))}
       </View>
 
       {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
@@ -145,6 +150,16 @@ export default function AddFoodModal() {
             onSuggestionConfirmed={handleSuggestionConfirm}
             recent={recent}
             frequent={frequent}
+          />
+        ) : tab === "recognize" && userId ? (
+          // Reviews AI-recognised items and saves each through addFoodLog only
+          // after the user confirms (nothing is logged automatically).
+          <RecognitionTab
+            initialMeal={meal}
+            loggedDate={loggedDate}
+            addLog={(log) => addFoodLog(userId, log)}
+            onDone={() => router.back()}
+            onManual={() => setTab("search")}
           />
         ) : (
           <QuickAddTab onConfirm={handleQuickAddConfirm} />
