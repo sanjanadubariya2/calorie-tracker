@@ -17,8 +17,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
 from app.core.request_context import correlation_id
-from app.llm.errors import LLMError
+from app.llm.errors import LLMError, LLMRateLimited
 from app.llm.provider import LLMProvider
+
+MAX_RATE_LIMIT_WAIT = 10        # seconds; longer quota waits are returned to the user as "busy"
+RATE_LIMIT_DEFAULT_WAIT = 3
 from app.llm.types import LLMRequest, LLMResponse, Usage
 
 logger = logging.getLogger(__name__)
@@ -70,12 +73,17 @@ class LLMService:
             try:
                 response = await self.provider.generate(request)
             except LLMError as exc:
-                retry = exc.retryable and attempt + 1 < self._retry.attempts
+                # A short quota wait (429 with a small or unknown Retry-After) is worth one retry:
+                # mid-turn the request is pinned to one model, so there is no fallback to absorb it.
+                rate_limited = isinstance(exc, LLMRateLimited) and (exc.retry_after or 0) <= MAX_RATE_LIMIT_WAIT
+                retry = (exc.retryable or rate_limited) and attempt + 1 < self._retry.attempts
                 logger.warning("LLM %s failed: %s (attempt %d%s) cid=%s", request.purpose, type(exc).__name__,
                                attempt + 1, ", retrying" if retry else "", correlation_id())
                 if not retry:
                     raise
-                await asyncio.sleep(self._retry.delay(attempt))
+                wait = (min(MAX_RATE_LIMIT_WAIT, exc.retry_after or RATE_LIMIT_DEFAULT_WAIT) if rate_limited
+                        else self._retry.delay(attempt))
+                await asyncio.sleep(wait)
                 attempt += 1
                 continue
             cost = estimate_cost(response.usage, self.price_for(response.model))

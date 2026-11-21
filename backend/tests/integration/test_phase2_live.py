@@ -125,15 +125,23 @@ def test_real_tools_over_the_catalogue(live: dict[str, str], api: TestClient, sc
         pytest.skip("catalogue is empty: load INDB first")
     assert search["results"][0]["source_ref"] == "ASC222"
     recs = r.json()["assistant_message"]["response"]["recommendations"]
-    assert recs["filters_applied"][:2] == ["diet: vegetarian", "allergies: peanut"]
+    # A declared allergy with no reviewed allergen data: nothing is recommended (never a guess).
+    assert (recs["status"], recs["recommendations"]) == ("insufficient_data", [])
+    assert any("reviewed allergen information" in n for n in recs["notes"])
+
+    # Without the allergy, the vegetarian filter applies and the numbers are the database's.
+    assert api.patch("/v1/me/preferences", headers=_h(token), json={"allergies": []}).status_code == 200
+    scripted.then(reply(call("recommend_meals", meal_type="lunch", count=3, mode="foods")),
+                  reply(respond("meal_recommendation", "Here are vegetarian lunch ideas.")))
+    r = _send(api, token, cid, "And without the peanut worry?")
+    assert r.status_code == 200, r.text
+    recs = r.json()["assistant_message"]["response"]["recommendations"]
     names = " ".join(x["name"].lower() for x in recs["recommendations"])
-    assert recs["recommendations"] and not any(w in names for w in ("chicken", "mutton", "egg", "fish", "peanut"))
-    # Recommendation numbers equal what logging that serving would store.
+    assert recs["recommendations"] and not any(w in names for w in ("chicken", "mutton", "egg", "fish"))
     rec = recs["recommendations"][0]
-    logged = _rest(live, token, "POST", "food_logs", json={
-        "user_id": user_id, "logged_date": today, "meal_type": "lunch", "food_name": rec["name"], "calories": 1,
-        "serving_g": rec["serving_g"], "source": "catalogue", "food_id": rec["food_id"]}).json()[0]
-    assert float(logged["calories"]) == rec["nutrition"]["calories_kcal"]
+    [priced] = _rest(live, token, "POST", "rpc/food_portion", json={
+        "p_food_id": rec["food_id"], "p_grams": rec["portions"][0]["grams"]}).json()
+    assert rec["nutrition"]["calories_kcal"] == round(priced["calories"])
     # Preferences are the user's own; deleting them works.
     assert api.delete("/v1/me/preferences", headers=_h(token)).status_code == 204
     assert api.get("/v1/me/preferences", headers=_h(token)).json() is None

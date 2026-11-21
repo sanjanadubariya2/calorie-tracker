@@ -175,6 +175,45 @@ Output (`result`):
 ```json
 {
   "$defs": {
+    "DayTotal": {
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "calories_kcal": {
+          "title": "Calories Kcal",
+          "type": "number"
+        },
+        "protein_g": {
+          "title": "Protein G",
+          "type": "number"
+        },
+        "carbs_g": {
+          "title": "Carbs G",
+          "type": "number"
+        },
+        "fat_g": {
+          "title": "Fat G",
+          "type": "number"
+        },
+        "entries": {
+          "title": "Entries",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "date",
+        "calories_kcal",
+        "protein_g",
+        "carbs_g",
+        "fat_g",
+        "entries"
+      ],
+      "title": "DayTotal",
+      "type": "object"
+    },
     "LogEntry": {
       "properties": {
         "date": {
@@ -280,6 +319,13 @@ Output (`result`):
     "more_available": {
       "title": "More Available",
       "type": "boolean"
+    },
+    "totals_by_date": {
+      "items": {
+        "$ref": "#/$defs/DayTotal"
+      },
+      "title": "Totals By Date",
+      "type": "array"
     }
   },
   "required": [
@@ -288,7 +334,8 @@ Output (`result`):
     "meal_type",
     "entries",
     "returned",
-    "more_available"
+    "more_available",
+    "totals_by_date"
   ],
   "title": "RecentLogsResult",
   "type": "object"
@@ -602,6 +649,13 @@ Output (`result`):
           "title": "Dislikes",
           "type": "array"
         },
+        "excluded_ingredients": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Ingredients",
+          "type": "array"
+        },
         "cuisines": {
           "items": {
             "type": "string"
@@ -615,6 +669,52 @@ Output (`result`):
           },
           "title": "Meal Preferences",
           "type": "array"
+        },
+        "preferred_meal_styles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Preferred Meal Styles",
+          "type": "array"
+        },
+        "max_prep_minutes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Prep Minutes"
+        },
+        "budget": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Budget"
+        },
+        "equipment": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Equipment"
         },
         "notes": {
           "anyOf": [
@@ -1092,7 +1192,7 @@ Output (`result`):
 
 ## `recommend_meals`
 
-Suggest catalogue foods for a meal that fit the user's remaining calories and macros today and their stated diet, allergies and dislikes. Ranking and nutrition are computed by the backend; explain the results, don't change their numbers.
+Recommend meals (published recipes, recipe pairings, meal templates and single dishes) for one meal, ranked by the app's recommendation engine against the user's remaining calories and macros, with their diet, allergies, excluded ingredients and equipment applied as hard filters. Nutrition is priced by the database. Present only what this returns: never add other meals, change numbers, or claim a meal is suitable for an allergy. If status isn't 'ok', explain the notes.
 
 Backs response types: meal_recommendation
 
@@ -1116,6 +1216,40 @@ Input (sent to the model as the function's JSON Schema):
       "maximum": 5,
       "minimum": 1,
       "type": "integer"
+    },
+    "max_kcal": {
+      "description": "Only if the user gave a calorie limit.",
+      "maximum": 2500,
+      "minimum": 50,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "protein": {
+      "description": "high: the user asked for high protein.",
+      "enum": [
+        "normal",
+        "high"
+      ],
+      "type": "string"
+    },
+    "cuisine": {
+      "description": "Only if the user asked for one cuisine, e.g. 'South Indian'.",
+      "maxLength": 40,
+      "minLength": 2,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "meals",
+        "foods",
+        "both"
+      ],
+      "type": "string"
     }
   },
   "required": [
@@ -1130,27 +1264,62 @@ Output (`result`):
 ```json
 {
   "$defs": {
+    "Exclusion": {
+      "properties": {
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "reason",
+        "label",
+        "count"
+      ],
+      "title": "Exclusion",
+      "type": "object"
+    },
     "MealTarget": {
       "properties": {
         "calories_kcal": {
           "title": "Calories Kcal",
-          "type": "number"
+          "type": "integer"
         },
         "protein_g": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
+          "title": "Protein G",
+          "type": "integer"
+        },
+        "carbs_g": {
+          "title": "Carbs G",
+          "type": "integer"
+        },
+        "fat_g": {
+          "title": "Fat G",
+          "type": "integer"
+        },
+        "basis": {
+          "enum": [
+            "targets",
+            "assumed"
           ],
-          "title": "Protein G"
+          "title": "Basis",
+          "type": "string"
         }
       },
       "required": [
         "calories_kcal",
-        "protein_g"
+        "protein_g",
+        "carbs_g",
+        "fat_g",
+        "basis"
       ],
       "title": "MealTarget",
       "type": "object"
@@ -1159,19 +1328,19 @@ Output (`result`):
       "properties": {
         "calories_kcal": {
           "title": "Calories Kcal",
-          "type": "number"
+          "type": "integer"
         },
         "protein_g": {
           "title": "Protein G",
-          "type": "number"
+          "type": "integer"
         },
         "carbs_g": {
           "title": "Carbs G",
-          "type": "number"
+          "type": "integer"
         },
         "fat_g": {
           "title": "Fat G",
-          "type": "number"
+          "type": "integer"
         }
       },
       "required": [
@@ -1183,18 +1352,62 @@ Output (`result`):
       "title": "RecNutrition",
       "type": "object"
     },
+    "RecPortion": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "servings": {
+          "title": "Servings",
+          "type": "number"
+        },
+        "serving_label": {
+          "title": "Serving Label",
+          "type": "string"
+        },
+        "grams": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Grams"
+        }
+      },
+      "required": [
+        "name",
+        "servings",
+        "serving_label",
+        "grams"
+      ],
+      "title": "RecPortion",
+      "type": "object"
+    },
     "Recommendation": {
       "properties": {
-        "food_id": {
-          "format": "uuid",
-          "title": "Food Id",
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "recipe",
+            "combo",
+            "meal",
+            "food"
+          ],
+          "title": "Kind",
           "type": "string"
         },
         "name": {
           "title": "Name",
           "type": "string"
         },
-        "category": {
+        "variant": {
           "anyOf": [
             {
               "type": "string"
@@ -1203,37 +1416,53 @@ Output (`result`):
               "type": "null"
             }
           ],
-          "title": "Category"
+          "title": "Variant"
         },
-        "serving_label": {
-          "title": "Serving Label",
-          "type": "string"
+        "food_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Single dishes only: usable with prepare_food_log.",
+          "title": "Food Id"
         },
-        "serving_g": {
-          "title": "Serving G",
-          "type": "number"
+        "portions": {
+          "items": {
+            "$ref": "#/$defs/RecPortion"
+          },
+          "title": "Portions",
+          "type": "array"
         },
         "nutrition": {
           "$ref": "#/$defs/RecNutrition"
         },
-        "source": {
-          "title": "Source",
-          "type": "string"
-        },
-        "source_ref": {
+        "total_minutes": {
           "anyOf": [
             {
-              "type": "string"
+              "type": "integer"
             },
             {
               "type": "null"
             }
           ],
-          "title": "Source Ref"
+          "title": "Total Minutes"
         },
         "score": {
           "title": "Score",
           "type": "number"
+        },
+        "fit": {
+          "enum": [
+            "strong",
+            "good",
+            "fair"
+          ],
+          "title": "Fit",
+          "type": "string"
         },
         "reasons": {
           "items": {
@@ -1241,19 +1470,28 @@ Output (`result`):
           },
           "title": "Reasons",
           "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
         }
       },
       "required": [
-        "food_id",
+        "key",
+        "kind",
         "name",
-        "category",
-        "serving_label",
-        "serving_g",
+        "variant",
+        "food_id",
+        "portions",
         "nutrition",
-        "source",
-        "source_ref",
+        "total_minutes",
         "score",
-        "reasons"
+        "fit",
+        "reasons",
+        "warnings"
       ],
       "title": "Recommendation",
       "type": "object"
@@ -1270,18 +1508,12 @@ Output (`result`):
       "title": "Meal Type",
       "type": "string"
     },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
     "meal_target": {
       "$ref": "#/$defs/MealTarget"
-    },
-    "remaining_today": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/RecNutrition"
-        },
-        {
-          "type": "null"
-        }
-      ]
     },
     "recommendations": {
       "items": {
@@ -1290,18 +1522,11 @@ Output (`result`):
       "title": "Recommendations",
       "type": "array"
     },
-    "filters_applied": {
+    "excluded": {
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/Exclusion"
       },
-      "title": "Filters Applied",
-      "type": "array"
-    },
-    "cautions": {
-      "items": {
-        "type": "string"
-      },
-      "title": "Cautions",
+      "title": "Excluded",
       "type": "array"
     },
     "notes": {
@@ -1311,21 +1536,25 @@ Output (`result`):
       "title": "Notes",
       "type": "array"
     },
+    "engine_version": {
+      "title": "Engine Version",
+      "type": "string"
+    },
     "data_source": {
-      "const": "catalogue",
-      "default": "catalogue",
+      "const": "recommendation_engine",
+      "default": "recommendation_engine",
       "title": "Data Source",
       "type": "string"
     }
   },
   "required": [
     "meal_type",
+    "status",
     "meal_target",
-    "remaining_today",
     "recommendations",
-    "filters_applied",
-    "cautions",
-    "notes"
+    "excluded",
+    "notes",
+    "engine_version"
   ],
   "title": "RecommendResult",
   "type": "object"
@@ -1648,9 +1877,16 @@ Output (`result`):
     "ProposedFood": {
       "properties": {
         "food_id": {
-          "format": "uuid",
-          "title": "Food Id",
-          "type": "string"
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Food Id"
         },
         "food_name": {
           "title": "Food Name",
@@ -1683,8 +1919,15 @@ Output (`result`):
           "title": "Unit"
         },
         "grams": {
-          "title": "Grams",
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Grams"
         },
         "quantity_source": {
           "title": "Quantity Source",
@@ -1733,6 +1976,31 @@ Output (`result`):
           },
           "title": "Warnings",
           "type": "array"
+        },
+        "recipe_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Id"
+        },
+        "recipe_servings": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recipe Servings"
         }
       },
       "required": [

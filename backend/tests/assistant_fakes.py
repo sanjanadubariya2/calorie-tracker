@@ -277,6 +277,9 @@ def search_row(f: dict[str, Any], score: float = 0.95, match_type: str = "alias"
     }
 
 
+REC_TABLES = ("recommendation_sets", "recommendation_items", "recommendation_events", "recommendation_feedback")
+
+
 class FakeNutritionDB:
     """PostgREST + RPC as each user: rows are returned only for the token's user."""
 
@@ -287,6 +290,16 @@ class FakeNutritionDB:
         self.search_by_query: dict[str, list[dict[str, Any]]] = {}
         self.fail_food_log_insert = False
         self.requests: list[tuple[str | None, str, dict[str, str]]] = []
+        # Recommendation candidates (migration 017 shapes). Food candidates are
+        # derived from self.foods unless overridden here.
+        self.attributes: dict[str, dict[str, Any]] = {}
+        self.recipe_rows: list[dict[str, Any]] = []
+        self.template_rows: list[dict[str, Any]] = []
+        self.recipe_kcal: dict[str, dict[str, float]] = {}     # recipe id -> per-serving values
+        self.recipe_instructions: dict[str, list[str]] = {}
+        # Recommendation history tables, owner-scoped like RLS.
+        self.rec: dict[str, list[dict[str, Any]]] = {t: [] for t in REC_TABLES}
+        self.fail_history_insert = False
 
     def user(self, user_id: str) -> UserData:
         return self.users.setdefault(user_id, UserData())
@@ -314,7 +327,98 @@ class FakeNutritionDB:
                                        "carbs_g": f["carbs_g_per_100"], "fat_g": f["fat_g_per_100"]},
                 "calories": round(f["kcal_per_100"] * g / 100), "protein_g": round(f["protein_g_per_100"] * g / 100, 1),
                 "carbs_g": round(f["carbs_g_per_100"] * g / 100, 1), "fat_g": round(f["fat_g_per_100"] * g / 100, 1)}])
+        if name == "recommendation_food_candidates":
+            return httpx.Response(200, json=[self.food_candidate(f) for f in self.foods])
+        if name == "recommendation_recipe_candidates":
+            return httpx.Response(200, json=self.recipe_rows)
+        if name == "recommendation_template_candidates":
+            return httpx.Response(200, json=self.template_rows)
+        if name == "recipe_portion":
+            per = self.recipe_kcal.get(body["p_recipe_id"])
+            if per is None:
+                return httpx.Response(200, json=None)
+            k = body["p_portions"]
+            return httpx.Response(200, json={"calories": round(per["calories"] * k), "grams": 100.0 * k,
+                                             **{m: round(per[m] * k, 1) for m in ("protein_g", "carbs_g", "fat_g")}})
         return httpx.Response(404, json={"message": "no such function"})
+
+    def food_candidate(self, f: dict[str, Any]) -> dict[str, Any]:
+        """A recommendation_food_candidates row for a fake food. Attributes default
+        to what the classifier would infer from the category and name."""
+        serving = f["food_servings"][0]
+        g = serving["grams"]
+        name = f["name"].lower()
+        diet = {"non_veg": "meat", "egg_dish": "egg"}.get(f["category"] or "", "vegetarian")
+        allergens = sorted({a for word, a in (("peanut", "peanut"), ("paneer", "milk"), ("egg", "egg")) if word in name})
+        attrs = {"diet_classes": [diet], "diet_status": "inferred", "vegan_compatible": None, "jain_compatible": None,
+                 "allergens": allergens, "allergen_status": "inferred", "regions": ["north_indian"],
+                 "meal_types": ["snack"] if f["category"] == "sweet" else ["breakfast", "lunch", "dinner", "snack"],
+                 "countable": False, **self.attributes.get(f["id"], {})}
+        return {"food_id": f["id"], "name": f["name"], "category": f["category"], "food_kind": "generic_dish",
+                "source": f["source"], "verification": "curated", "completeness": 1,
+                "serving_label": serving["label"], "serving_grams": g,
+                "calories": round(f["kcal_per_100"] * g / 100), "protein_g": round(f["protein_g_per_100"] * g / 100, 1),
+                "carbs_g": round(f["carbs_g_per_100"] * g / 100, 1), "fat_g": round(f["fat_g_per_100"] * g / 100, 1),
+                "quality_flags": f.get("quality_flags") or [], **attrs}
+
+    @staticmethod
+    def _matches(row: dict[str, Any], params: dict[str, str]) -> bool:
+        for k, v in params.items():
+            if k in ("select", "order", "limit", "on_conflict"):
+                continue
+            val = row.get(k)
+            if v.startswith("eq."):
+                if str(val) != v[3:]:
+                    return False
+            elif v.startswith("gte."):
+                if val is None or str(val) < v[4:]:
+                    return False
+            elif v.startswith("in.("):
+                if str(val) not in v[4:-1].split(","):
+                    return False
+        return True
+
+    def handle_recommendation_rest(self, request: httpx.Request, sub: str | None, table: str,
+                                   params: dict[str, str]) -> httpx.Response:
+        rows = self.rec[table]
+        if request.method == "GET":
+            mine = [dict(r) for r in rows if r["user_id"] == sub and self._matches(r, params)]
+            select = params.get("select", "")
+            for r in mine:
+                if "recommendation_sets(" in select:
+                    st = next(x for x in self.rec["recommendation_sets"] if x["id"] == r["set_id"])
+                    r["recommendation_sets"] = {"meal_type": st["meal_type"], "local_date": st["local_date"]}
+                if "recommendation_items(" in select:
+                    it = next((x for x in self.rec["recommendation_items"]
+                               if x["set_id"] == r["set_id"] and x["rank"] == r["rank"]), None)
+                    r["recommendation_items"] = it and {k: it.get(k) for k in ("kind", "food_id", "template_id",
+                                                                                 "recipe_id")}
+            return httpx.Response(200, json=mine)
+        if request.method == "POST":
+            if self.fail_history_insert:
+                return httpx.Response(503, json={"message": "unavailable"})
+            body = json.loads(request.content)
+            new = body if isinstance(body, list) else [body]
+            now = dt.datetime.now(dt.timezone.utc).isoformat()
+            saved = []
+            for r in new:
+                row = {"id": str(uuid.uuid4()), "created_at": now, **r, "user_id": sub}
+                if table == "recommendation_events":
+                    # Foreign keys (set_id, rank) and (set_id, user_id): only your own items.
+                    owner = next((x for x in self.rec["recommendation_items"]
+                                  if x["set_id"] == r["set_id"] and x["rank"] == r["rank"] and x["user_id"] == sub), None)
+                    if owner is None:
+                        return httpx.Response(409, json={"code": "23503", "message": "foreign key"})
+                if table == "recommendation_feedback":
+                    row["expires_at"] = None if r["feedback"] in ("never", "saved") else "2099-01-01T00:00:00+00:00"
+                saved.append(row)
+            rows.extend(saved)
+            return httpx.Response(201, json=saved)
+        if request.method == "DELETE":
+            gone = [r for r in rows if r["user_id"] == sub and self._matches(r, params)]
+            self.rec[table] = [r for r in rows if r not in gone]
+            return httpx.Response(200, json=gone)
+        return httpx.Response(405, json={})
 
     def handle_rest(self, request: httpx.Request) -> httpx.Response:
         sub = token_sub(request)
@@ -359,6 +463,12 @@ class FakeNutritionDB:
                 had = data.prefs is not None
                 data.prefs = None
                 return httpx.Response(200, json=[{}] if had else [])
+        if table in REC_TABLES:
+            return self.handle_recommendation_rest(request, sub, table, params)
+        if table == "recipes":
+            ids = params.get("id", "").removeprefix("in.(").rstrip(")").split(",")
+            return httpx.Response(200, json=[{"id": i, "instructions": self.recipe_instructions.get(i, [])}
+                                             for i in ids if i in self.recipe_instructions])
         if table == "foods":
             if params.get("id", "").startswith("eq."):
                 return httpx.Response(200, json=[f for f in self.foods if f["id"] == params["id"][3:]])
@@ -374,10 +484,12 @@ class InMemoryProposals:
     def __init__(self) -> None:
         self.rows: dict[str, dict[str, Any]] = {}
 
-    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID, payload: dict[str, Any],
-                     ttl_minutes: int) -> dict[str, Any]:
+    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID | None, payload: dict[str, Any],
+                     ttl_minutes: int, recommendation_item_id: uuid.UUID | None = None) -> dict[str, Any]:
         now = dt.datetime.now(dt.timezone.utc)
-        row = {"id": uuid.uuid4(), "user_id": user.user_id, "conversation_id": conversation_id, "status": "pending",
+        row = {"id": uuid.uuid4(), "user_id": user.user_id, "conversation_id": conversation_id,
+               "recommendation_item_id": recommendation_item_id,
+               "origin": "assistant" if conversation_id else "recommendation", "status": "pending",
                "payload": json.loads(json.dumps(payload)), "expires_at": now + dt.timedelta(minutes=ttl_minutes),
                "food_log_ids": [], "created_at": now}
         self.rows[str(row["id"])] = row

@@ -43,7 +43,28 @@ def test_transient_failures_are_retried() -> None:
     assert response.attempts == 2 and len(llm.requests) == 2
 
 
-@pytest.mark.parametrize("error", [LLMRateLimited(5), LLMRefused("x"), LLMRequestRejected("400"), LLMInvalidOutput("x")])
+def test_short_quota_waits_are_retried_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.llm.service as svc_mod
+
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(svc_mod.asyncio, "sleep", fake_sleep)
+    llm = ScriptedLLM(LLMRateLimited(4), reply())
+    assert asyncio.run(LLMService(llm, retry=FAST).generate(REQ)).attempts == 2
+    assert waits == [4]
+    llm = ScriptedLLM(LLMRateLimited(None), LLMRateLimited(None), reply())
+    with pytest.raises(LLMRateLimited):
+        asyncio.run(LLMService(llm, retry=FAST).generate(REQ))   # bounded: one retry
+    long = ScriptedLLM(LLMRateLimited(60), reply())
+    with pytest.raises(LLMRateLimited):
+        asyncio.run(LLMService(long, retry=FAST).generate(REQ))  # long waits go back to the user
+    assert len(long.requests) == 1
+
+
+@pytest.mark.parametrize("error", [LLMRefused("x"), LLMRequestRejected("400"), LLMInvalidOutput("x")])
 def test_non_transient_failures_are_not_retried(error: Exception) -> None:
     llm = ScriptedLLM(error, reply())
     with pytest.raises(type(error)):
@@ -224,8 +245,8 @@ def test_gemini_errors(monkeypatch: pytest.MonkeyPatch, error: Any, expected: ty
         asyncio.run(llm.generate(REQ))
     if expected is LLMRateLimited:
         assert raised.value.retry_after == 9
-    # 5xx/timeouts fall back to the next model; quota and request errors don't.
-    assert len(calls) == (2 if expected in (LLMUnavailable, LLMTimeout) else 1)
+    # 5xx, timeouts and per-model quota (429) fall back to the next model; request errors don't.
+    assert len(calls) == (2 if expected in (LLMUnavailable, LLMTimeout, LLMRateLimited) else 1)
     assert "provider detail" not in str(raised.value)
 
 

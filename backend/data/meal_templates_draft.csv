@@ -1,0 +1,89 @@
+slug,name,meal_types,regions,position,slot,food_source_ref,food_name_check,default_servings,min_servings,max_servings,servings_step,optional
+poha-with-tea,Poha,breakfast|snack,west_indian,1,main,BFP044,Poha,1,1,2,0.5,false
+poha-with-tea,Poha,breakfast|snack,west_indian,2,drink,ASC001,Hot tea (Garam Chai),1,1,1,1,true
+rava-upma-coconut-chutney,Rava upma,breakfast,south_indian,1,main,BFP039,Semolina upma (Suji/Rava upma),1,1,2,0.5,false
+rava-upma-coconut-chutney,Rava upma,breakfast,south_indian,2,accompaniment,ASC386,Coconut chutney (Nariyal ki chutney),1,1,2,1,true
+idli-sambar-chutney,Idli with sambar,breakfast,south_indian,1,main,ASC144,Idli,3,2,5,1,false
+idli-sambar-chutney,Idli with sambar,breakfast,south_indian,2,side,ASC167,Sambar,0.5,0.5,1,0.5,false
+idli-sambar-chutney,Idli with sambar,breakfast,south_indian,3,accompaniment,ASC386,Coconut chutney (Nariyal ki chutney),1,1,2,1,true
+rava-idli-sambar,Rava idli with sambar,breakfast,south_indian,1,main,BFP579,Semolina idli (Suji/Rava idli),3,2,4,1,false
+rava-idli-sambar,Rava idli with sambar,breakfast,south_indian,2,side,ASC167,Sambar,0.5,0.5,1,0.5,false
+masala-dosa-sambar,Masala dosa with sambar,breakfast|lunch,south_indian,1,main,ASC146,Masala dosa,1,1,2,1,false
+masala-dosa-sambar,Masala dosa with sambar,breakfast|lunch,south_indian,2,side,ASC167,Sambar,0.5,0.5,1,0.5,false
+masala-dosa-sambar,Masala dosa with sambar,breakfast|lunch,south_indian,3,accompaniment,ASC386,Coconut chutney (Nariyal ki chutney),1,1,2,1,true
+plain-dosa-sambar,Plain dosa with sambar,breakfast|dinner,south_indian,1,main,BFP148,Plain dosa,2,1,3,1,false
+plain-dosa-sambar,Plain dosa with sambar,breakfast|dinner,south_indian,2,side,ASC167,Sambar,0.5,0.5,1,0.5,false
+plain-dosa-sambar,Plain dosa with sambar,breakfast|dinner,south_indian,3,accompaniment,ASC386,Coconut chutney (Nariyal ki chutney),1,1,2,1,true
+uttapam-chutney,Uttapam with coconut chutney,breakfast|dinner,south_indian,1,main,BFP152,Uttapam,2,1,3,1,false
+uttapam-chutney,Uttapam with coconut chutney,breakfast|dinner,south_indian,2,accompaniment,ASC386,Coconut chutney (Nariyal ki chutney),1,1,2,1,false
+uttapam-chutney,Uttapam with coconut chutney,breakfast|dinner,south_indian,3,side,ASC167,Sambar,0.5,0.5,1,0.5,true
+aloo-paratha-raita,Aloo paratha with cucumber raita,breakfast|lunch,north_indian,1,bread,ASC098,Potato parantha/paratha (Aloo ka parantha/paratha),1,1,2,1,false
+aloo-paratha-raita,Aloo paratha with cucumber raita,breakfast|lunch,north_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,false
+paratha-dry-aloo,Paratha with dry aloo,breakfast,north_indian,1,bread,ASC097,Plain parantha/paratha,2,1,3,1,false
+paratha-dry-aloo,Paratha with dry aloo,breakfast,north_indian,2,main,ASC178,Dry potato (Sookhe aloo),1,0.5,1,0.5,false
+besan-cheela-chutney,Besan cheela,breakfast|snack,north_indian,1,main,OSR100,Gram flour chilla/cheela (Besan chilla/cheela),2,1,4,1,false
+besan-cheela-chutney,Besan cheela,breakfast|snack,north_indian,2,accompaniment,ASC387,Mint and coriander chutney (Pudinay aur dhaniye ki chutney),1,1,2,1,true
+moong-cheela-chutney,Moong dal cheela,breakfast|dinner,north_indian,1,main,BFP046,Moong dal stuffed cheela/chilla (Moong dal ka cheela/chilla),1,1,2,1,false
+moong-cheela-chutney,Moong dal cheela,breakfast|dinner,north_indian,2,accompaniment,ASC387,Mint and coriander chutney (Pudinay aur dhaniye ki chutney),1,1,2,1,true
+methi-thepla-raita,Methi thepla with raita,breakfast|lunch,west_indian,1,bread,OSR104,Methi thepla,2,1,4,1,false
+methi-thepla-raita,Methi thepla with raita,breakfast|lunch,west_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,false
+dhokla-chutney,Dhokla,breakfast|snack,west_indian,1,main,ASC474,Dhokla,3,2,6,1,false
+dhokla-chutney,Dhokla,breakfast|snack,west_indian,2,accompaniment,ASC387,Mint and coriander chutney (Pudinay aur dhaniye ki chutney),1,1,2,1,true
+egg-bhurji-chapati,Egg bhurji with chapati,breakfast|dinner,north_indian,1,main,ASC059,Scrambled egg (Ande ki bhurji),2,1,3,1,false
+egg-bhurji-chapati,Egg bhurji with chapati,breakfast|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,3,1,false
+sprouted-moong-poha-tea,Sprouted moong poha,breakfast,west_indian,1,main,ASC469,Sprouted moong poha,1,0.5,1,0.5,false
+sprouted-moong-poha-tea,Sprouted moong poha,breakfast,west_indian,2,drink,ASC001,Hot tea (Garam Chai),1,1,1,1,true
+vegetable-poha-tea,Vegetable poha,breakfast|snack,west_indian,1,main,BFP045,Vegetable poha,1,1,2,0.5,false
+vegetable-poha-tea,Vegetable poha,breakfast|snack,west_indian,2,drink,ASC001,Hot tea (Garam Chai),1,1,1,1,true
+roti-moong-dal-aloo-gobi,"Chapati, moong dal and aloo gobi",lunch|dinner,north_indian,1,bread,ASC096,Chapati/Roti,2,1,4,1,false
+roti-moong-dal-aloo-gobi,"Chapati, moong dal and aloo gobi",lunch|dinner,north_indian,2,main,ASC151,Washed moong dal (Dhuli moong ki dal),1,0.5,1.5,0.5,false
+roti-moong-dal-aloo-gobi,"Chapati, moong dal and aloo gobi",lunch|dinner,north_indian,3,side,ASC171,Potato cauliflower (Aloo gobhi),1,0.5,1,0.5,false
+sambar-rice,Sambar rice,lunch|dinner,south_indian,1,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+sambar-rice,Sambar rice,lunch|dinner,south_indian,2,main,ASC167,Sambar,1,0.5,1.5,0.5,false
+rasam-rice-raita,Rasam rice,lunch|dinner,south_indian,1,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+rasam-rice-raita,Rasam rice,lunch|dinner,south_indian,2,main,BFP176,Rasam with tamarind (Puli rasam/ Chintapandu rasam/ Charu/Saaru),1,0.5,1,0.5,false
+rasam-rice-raita,Rasam rice,lunch|dinner,south_indian,3,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,true
+rajma-chawal,Rajma chawal,lunch|dinner,north_indian,1,main,ASC165,Kidney bean curry (Rajmah curry),1.5,1,2,0.5,false
+rajma-chawal,Rajma chawal,lunch|dinner,north_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+chole-chapati-salad,Chole with chapati,lunch|dinner,north_indian,1,main,ASC162,Chickpeas curry (Safed channa curry),1.5,1,2,0.5,false
+chole-chapati-salad,Chole with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+chole-chapati-salad,Chole with chapati,lunch|dinner,north_indian,3,side,BFP301,Tossed green salad,1,0.5,1,0.5,true
+dal-makhani-chapati,Dal makhani with chapati,lunch|dinner,north_indian,1,main,OSR139,Dal makhani,1,0.5,1,0.5,false
+dal-makhani-chapati,Dal makhani with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+paneer-butter-masala-chapati,Paneer butter masala with chapati,lunch|dinner,north_indian,1,main,ASC222,Paneer in butter sauce,1,0.5,1.5,0.5,false
+paneer-butter-masala-chapati,Paneer butter masala with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+palak-paneer-chapati,Palak paneer with chapati,lunch|dinner,north_indian,1,main,ASC215,Spinach paneer (Palak paneer),1,0.5,1,0.5,false
+palak-paneer-chapati,Palak paneer with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+matar-paneer-rice,Matar paneer with rice,lunch|dinner,north_indian,1,main,ASC191,Pea paneer curry (Matar paneer),1,0.5,1,0.5,false
+matar-paneer-rice,Matar paneer with rice,lunch|dinner,north_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+veg-pulao-raita,Vegetable pulao with raita,lunch|dinner,pan_indian,1,rice,ASC115,Mixed vegetable pulao,0.5,0.5,1,0.5,false
+veg-pulao-raita,Vegetable pulao with raita,lunch|dinner,pan_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,false
+jeera-rice-mixed-dal,Jeera rice with mixed dal,lunch|dinner,north_indian,1,rice,BFP134,Cumin pulao (Jeera/Zeera pulao),0.5,0.5,1,0.5,false
+jeera-rice-mixed-dal,Jeera rice with mixed dal,lunch|dinner,north_indian,2,main,ASC155,Mixed dal,1,0.5,1.5,0.5,false
+curd-rice,Curd rice,lunch|dinner,south_indian,1,main,ASC126,Curd rice (Dahi bhaat/Dahi chawal/ Perugu annam/Daddojanam/Thayir saadam),1,0.5,1,0.5,false
+lemon-rice-raita,Lemon rice,lunch,south_indian,1,rice,ASC124,"Lemon rice (Pulihora, Elumichai sadam, Chitranna)",0.5,0.5,1,0.5,false
+lemon-rice-raita,Lemon rice,lunch,south_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,true
+khichdi-raita,Khichdi,lunch|dinner,pan_indian,1,main,BFP144,Plain khitchdi (Plain khichri/khichdi),1,0.5,1.5,0.5,false
+khichdi-raita,Khichdi,lunch|dinner,pan_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,true
+veg-biryani-raita,Vegetable biryani with raita,lunch|dinner,pan_indian,1,rice,ASC123,Vegetable biryani/biriyani,1,0.5,1,0.5,false
+veg-biryani-raita,Vegetable biryani with raita,lunch|dinner,pan_indian,2,side,ASC273,Cucumber raita (Kheere ka raita),1,0.5,1,0.5,false
+chana-dal-rice,Chana dal with rice,lunch|dinner,north_indian,1,main,OSR142,Split bengal gram dal (Channa dal),1,0.5,1,0.5,false
+chana-dal-rice,Chana dal with rice,lunch|dinner,north_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+masoor-dal-chapati-bhindi,"Masoor dal, chapati and bhindi",lunch|dinner,north_indian,1,main,ASC157,Whole masoor (Masoor ki dal),1,0.5,1.5,0.5,false
+masoor-dal-chapati-bhindi,"Masoor dal, chapati and bhindi",lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+masoor-dal-chapati-bhindi,"Masoor dal, chapati and bhindi",lunch|dinner,north_indian,3,side,BFP269,Okra/Lady's fingers fry (Bhindi sabzi/sabji/subji),1,0.5,1,0.5,false
+baingan-bharta-chapati,Baingan bharta with chapati,lunch|dinner,north_indian,1,main,ASC177,Brinjal bhartha (Baingan ka bhartha),1,0.5,1,0.5,false
+baingan-bharta-chapati,Baingan bharta with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+baingan-bharta-chapati,Baingan bharta with chapati,lunch|dinner,north_indian,3,side,ASC151,Washed moong dal (Dhuli moong ki dal),1,0.5,1,0.5,true
+soya-korma-chapati,Soya chunks korma with chapati,lunch|dinner,north_indian,1,main,BFP204,Soya chunks korma (Nutrinugget korma),1,0.5,1,0.5,false
+soya-korma-chapati,Soya chunks korma with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+chicken-curry-rice,Chicken curry with rice,lunch|dinner,north_indian,1,main,ASC240,Chicken curry,1,0.5,1.5,0.5,false
+chicken-curry-rice,Chicken curry with rice,lunch|dinner,north_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+chicken-curry-chapati,Chicken curry with chapati,lunch|dinner,north_indian,1,main,ASC240,Chicken curry,1,0.5,1.5,0.5,false
+chicken-curry-chapati,Chicken curry with chapati,lunch|dinner,north_indian,2,bread,ASC096,Chapati/Roti,2,1,4,1,false
+bengali-fish-curry-rice,Bengali fish curry with rice,lunch|dinner,east_indian,1,main,BFP223,Bengal fish curry (Bengali machli curry),1,0.5,1,0.5,false
+bengali-fish-curry-rice,Bengali fish curry with rice,lunch|dinner,east_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+egg-curry-rice,Egg curry with rice,lunch|dinner,pan_indian,1,main,BFP240,Egg curry (Anda curry),1,1,2,0.5,false
+egg-curry-rice,Egg curry with rice,lunch|dinner,pan_indian,2,rice,ASC113,Boiled rice (Uble chawal),0.5,0.5,1,0.5,false
+sprouts-salad-lassi,Sprouted moong salad,snack,pan_indian,1,main,ASC259,Sprouted moong salad,1,1,2,0.5,false
+sprouts-salad-lassi,Sprouted moong salad,snack,pan_indian,2,drink,ASC022,Lassi (salted),0.5,0.5,1,0.5,true

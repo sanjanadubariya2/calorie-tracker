@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { MEAL_SLOTS, colors, radius, spacing, typography } from "@/constants/theme";
 import type { FoodLogProposal, ItemEdit, ProposedFood } from "@/lib/assistant";
 import { groundItems } from "@/lib/recognition";
+import { sourceLabel, warningText } from "@/lib/recognitionReview";
 
 interface Props {
   proposal: FoodLogProposal;
@@ -33,7 +34,7 @@ function isExpired(p: FoodLogProposal): boolean {
 export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
   const [meal, setMeal] = useState<string>(proposal.meal_type);
   const [drafts, setDrafts] = useState<Draft[]>(() =>
-    proposal.items.map((i) => ({ quantity: i.quantity !== null ? String(i.quantity) : String(i.grams), unit: i.unit ?? "g",
+    proposal.items.map((i) => ({ quantity: i.quantity !== null ? String(i.quantity) : String(i.grams ?? 1), unit: i.unit ?? "g",
                                  removed: false, preview: null, previewing: false })));
   const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
     const item = proposal.items[index];
     if (d.removed) return [{ index, remove: true }];
     const q = Number(d.quantity.replace(",", "."));
-    const original = item.quantity ?? item.grams;
+    const original = item.quantity ?? item.grams ?? 1;
     const unitOriginal = item.unit ?? "g";
     return Number.isFinite(q) && q > 0 && (q !== original || d.unit !== unitOriginal) ? [{ index, quantity: q, unit: d.unit }] : [];
   }), [drafts, proposal.items]);
@@ -69,6 +70,7 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
     const q = Number(quantity.replace(",", "."));
     if (!Number.isFinite(q) || q <= 0) return;
     const item = proposal.items[i];
+    if (!item.food_id) return;                      // a recipe: re-priced by servings when confirmed
     update(i, { previewing: true });
     try {
       const result = await groundItems([{ food_name: item.food_name, quantity: q, unit: unit as never,
@@ -111,7 +113,7 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
         const d = drafts[i];
         const n = nutritionOf(i);
         return (
-          <View key={`${item.food_id}-${i}`} style={[styles.item, d.removed && styles.removed]} testID={`proposal-item-${i}`}>
+          <View key={`${item.food_id ?? item.recipe_id}-${i}`} style={[styles.item, d.removed && styles.removed]} testID={`proposal-item-${i}`}>
             <View style={styles.itemHeader}>
               <Text style={styles.foodName}>{item.food_name}</Text>
               {actionable && remaining > (d.removed ? 0 : 1) && (
@@ -130,7 +132,7 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
                   keyboardType="decimal-pad"
                   testID={`proposal-quantity-${i}`}
                 />
-                {[...new Set([item.unit ?? "g", "g"])].map((u) => (
+                {item.recipe_id ? <Text style={styles.unitText}>servings</Text> : [...new Set([item.unit ?? "g", "g"])].map((u) => (
                   <Pressable key={u} style={[styles.unit, d.unit === u && styles.unitActive]}
                     onPress={() => { update(i, { unit: u, preview: null }); void reprice(i, d.quantity, u); }} testID={`proposal-unit-${i}-${u}`}>
                     <Text style={[styles.unitText, d.unit === u && styles.unitTextActive]}>{u}</Text>
@@ -140,7 +142,8 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
               </View>
             ) : (
               <Text style={styles.detail}>
-                {item.quantity !== null ? `${fmt(item.quantity)} ${item.unit ?? ""} · ` : ""}{fmt(item.grams)} g
+                {item.quantity !== null ? `${fmt(item.quantity)} ${item.unit ?? ""}` : ""}
+                {item.grams !== null ? `${item.quantity !== null ? " · " : ""}${fmt(item.grams)} g` : ""}
               </Text>
             )}
             {!d.removed && (
@@ -149,10 +152,9 @@ export function ProposalCard({ proposal, onConfirm, onCancel }: Props) {
               </Text>
             )}
             <Text style={styles.source}>
-              {item.portion_is_estimate ? "Estimated portion · " : ""}Source: {item.nutrition_source.toUpperCase()}
-              {item.source_ref ? ` ${item.source_ref}` : ""}
+              {item.portion_is_estimate ? "Estimated portion · " : ""}Source: {sourceLabel(item.nutrition_source, item.source_ref)}
             </Text>
-            {item.warnings.map((w) => <Text key={w} style={styles.warning}>⚠ {w.replace(/_/g, " ")}</Text>)}
+            {item.warnings.map((w) => <Text key={w} style={styles.warning}>⚠ {warningText(w)}</Text>)}
           </View>
         );
       })}

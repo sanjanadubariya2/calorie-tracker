@@ -52,10 +52,11 @@ async function refreshedAccessToken(): Promise<string> {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** JSON-serialised as the body (sets Content-Type). */
   json?: unknown;
-  query?: Record<string, string | undefined>;
+  /** Arrays repeat the parameter (?a=1&a=2). */
+  query?: Record<string, string | string[] | undefined>;
   body?: Blob | ArrayBuffer | string;
   contentType?: string;
   timeoutMs?: number;
@@ -116,7 +117,7 @@ export async function backendRequest<T>(path: string, options: RequestOptions = 
   if (!API_BASE_URL) throw new Error("EXPO_PUBLIC_API_BASE_URL is not set");
 
   const params = Object.entries(options.query ?? {})
-    .filter((entry): entry is [string, string] => entry[1] !== undefined)
+    .flatMap(([k, v]) => (v === undefined ? [] : (Array.isArray(v) ? v : [v]).map((x) => [k, x] as const)))
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
   const url = `${API_BASE_URL}${path}${params ? `?${params}` : ""}`;

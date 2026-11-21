@@ -133,37 +133,43 @@ export type Database = {
       }
       assistant_proposals: {
         Row: {
-          conversation_id: string
+          conversation_id: string | null
           created_at: string
           expires_at: string
           food_log_ids: string[]
           id: string
           kind: string
+          origin: string
           payload: Json
+          recommendation_item_id: string | null
           status: string
           status_changed_at: string
           user_id: string
         }
         Insert: {
-          conversation_id: string
+          conversation_id?: string | null
           created_at?: string
           expires_at: string
           food_log_ids?: string[]
           id?: string
           kind?: string
+          origin?: string
           payload: Json
+          recommendation_item_id?: string | null
           status?: string
           status_changed_at?: string
           user_id: string
         }
         Update: {
-          conversation_id?: string
+          conversation_id?: string | null
           created_at?: string
           expires_at?: string
           food_log_ids?: string[]
           id?: string
           kind?: string
+          origin?: string
           payload?: Json
+          recommendation_item_id?: string | null
           status?: string
           status_changed_at?: string
           user_id?: string
@@ -175,6 +181,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "assistant_conversations"
             referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "assistant_proposals_recommendation_item_id_fkey"
+            columns: ["recommendation_item_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_items"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -285,6 +298,85 @@ export type Database = {
             foreignKeyName: "food_aliases_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "food_aliases_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_attributes: {
+        Row: {
+          allergen_status: string
+          allergens: string[]
+          classifier_version: string | null
+          countable: boolean | null
+          diet_class: string
+          diet_status: string
+          food_id: string
+          jain_compatible: boolean | null
+          meal_types: string[]
+          reasons: string[]
+          regions: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          updated_at: string
+          vegan_compatible: boolean | null
+        }
+        Insert: {
+          allergen_status?: string
+          allergens?: string[]
+          classifier_version?: string | null
+          countable?: boolean | null
+          diet_class?: string
+          diet_status?: string
+          food_id: string
+          jain_compatible?: boolean | null
+          meal_types?: string[]
+          reasons?: string[]
+          regions?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          updated_at?: string
+          vegan_compatible?: boolean | null
+        }
+        Update: {
+          allergen_status?: string
+          allergens?: string[]
+          classifier_version?: string | null
+          countable?: boolean | null
+          diet_class?: string
+          diet_status?: string
+          food_id?: string
+          jain_compatible?: boolean | null
+          meal_types?: string[]
+          reasons?: string[]
+          regions?: string[]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          updated_at?: string
+          vegan_compatible?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_attributes_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: true
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "food_attributes_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: true
             referencedRelation: "foods"
             referencedColumns: ["id"]
           },
@@ -353,6 +445,13 @@ export type Database = {
             foreignKeyName: "food_logs_food_id_fkey"
             columns: ["food_id"]
             isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "food_logs_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
             referencedRelation: "foods"
             referencedColumns: ["id"]
           },
@@ -390,6 +489,13 @@ export type Database = {
           source?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "food_servings_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
           {
             foreignKeyName: "food_servings_food_id_fkey"
             columns: ["food_id"]
@@ -573,6 +679,112 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_template_components: {
+        Row: {
+          default_servings: number
+          food_id: string
+          id: string
+          max_servings: number
+          min_servings: number
+          optional: boolean
+          position: number
+          servings_step: number
+          slot: string
+          template_id: string
+        }
+        Insert: {
+          default_servings: number
+          food_id: string
+          id?: string
+          max_servings: number
+          min_servings: number
+          optional?: boolean
+          position: number
+          servings_step?: number
+          slot: string
+          template_id: string
+        }
+        Update: {
+          default_servings?: number
+          food_id?: string
+          id?: string
+          max_servings?: number
+          min_servings?: number
+          optional?: boolean
+          position?: number
+          servings_step?: number
+          slot?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_template_components_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "meal_template_components_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_template_components_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_templates: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string | null
+          id: string
+          meal_types: string[]
+          name: string
+          regions: string[]
+          slug: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          meal_types: string[]
+          name: string
+          regions?: string[]
+          slug: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          meal_types?: string[]
+          name?: string
+          regions?: string[]
+          slug?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       nutrition_target_history: {
         Row: {
           activity_level: string
@@ -672,37 +884,490 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_categories: {
+        Row: {
+          kind: string
+          label: string
+          slug: string
+        }
+        Insert: {
+          kind: string
+          label: string
+          slug: string
+        }
+        Update: {
+          kind?: string
+          label?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      recipe_category_assignments: {
+        Row: {
+          category_slug: string
+          recipe_id: string
+        }
+        Insert: {
+          category_slug: string
+          recipe_id: string
+        }
+        Update: {
+          category_slug?: string
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_category_assignments_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "recipe_categories"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "recipe_category_assignments_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_ingredients: {
+        Row: {
+          food_id: string
+          grams: number | null
+          grams_source: string | null
+          id: string
+          is_estimate: boolean
+          optional: boolean
+          position: number
+          preparation: string | null
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          food_id: string
+          grams?: number | null
+          grams_source?: string | null
+          id?: string
+          is_estimate?: boolean
+          optional?: boolean
+          position: number
+          preparation?: string | null
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Update: {
+          food_id?: string
+          grams?: number | null
+          grams_source?: string | null
+          id?: string
+          is_estimate?: boolean
+          optional?: boolean
+          position?: number
+          preparation?: string | null
+          quantity?: number
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          cook_minutes: number | null
+          cooked_weight_g: number | null
+          created_at: string
+          description: string | null
+          equipment: string[] | null
+          family_id: string
+          id: string
+          instructions: string[]
+          is_current: boolean
+          name: string
+          normalized_name: string | null
+          nutrition_snapshot: Json | null
+          owner_id: string | null
+          prep_minutes: number | null
+          published_at: string | null
+          published_by: string | null
+          quantities_estimated: boolean
+          serving_label: string
+          servings: number
+          slug: string
+          source: string
+          source_name: string | null
+          source_ref: string | null
+          source_url: string | null
+          status: string
+          updated_at: string
+          variant: string | null
+          verification: string
+          version: number
+        }
+        Insert: {
+          cook_minutes?: number | null
+          cooked_weight_g?: number | null
+          created_at?: string
+          description?: string | null
+          equipment?: string[] | null
+          family_id?: string
+          id?: string
+          instructions?: string[]
+          is_current?: boolean
+          name: string
+          normalized_name?: string | null
+          nutrition_snapshot?: Json | null
+          owner_id?: string | null
+          prep_minutes?: number | null
+          published_at?: string | null
+          published_by?: string | null
+          quantities_estimated?: boolean
+          serving_label: string
+          servings: number
+          slug: string
+          source: string
+          source_name?: string | null
+          source_ref?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          variant?: string | null
+          verification?: string
+          version?: number
+        }
+        Update: {
+          cook_minutes?: number | null
+          cooked_weight_g?: number | null
+          created_at?: string
+          description?: string | null
+          equipment?: string[] | null
+          family_id?: string
+          id?: string
+          instructions?: string[]
+          is_current?: boolean
+          name?: string
+          normalized_name?: string | null
+          nutrition_snapshot?: Json | null
+          owner_id?: string | null
+          prep_minutes?: number | null
+          published_at?: string | null
+          published_by?: string | null
+          quantities_estimated?: boolean
+          serving_label?: string
+          servings?: number
+          slug?: string
+          source?: string
+          source_name?: string | null
+          source_ref?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          variant?: string | null
+          verification?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      recommendation_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          rank: number
+          set_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          rank: number
+          set_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          rank?: number
+          set_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_events_set_id_rank_fkey"
+            columns: ["set_id", "rank"]
+            isOneToOne: false
+            referencedRelation: "recommendation_items"
+            referencedColumns: ["set_id", "rank"]
+          },
+          {
+            foreignKeyName: "recommendation_events_set_id_user_id_fkey"
+            columns: ["set_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_sets"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      recommendation_feedback: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          feedback: string
+          food_id: string | null
+          id: string
+          item_id: string | null
+          name: string | null
+          recipe_family_id: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          feedback: string
+          food_id?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string | null
+          recipe_family_id?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          feedback?: string
+          food_id?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string | null
+          recipe_family_id?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_feedback_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "recommendation_feedback_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_feedback_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_feedback_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recommendation_items: {
+        Row: {
+          created_at: string
+          food_id: string | null
+          id: string
+          kind: string
+          outcome: string
+          outcome_at: string | null
+          rank: number
+          recipe_id: string | null
+          score: number
+          score_breakdown: Json
+          set_id: string
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          kind: string
+          outcome?: string
+          outcome_at?: string | null
+          rank: number
+          recipe_id?: string | null
+          score: number
+          score_breakdown?: Json
+          set_id: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          kind?: string
+          outcome?: string
+          outcome_at?: string | null
+          rank?: number
+          recipe_id?: string | null
+          score?: number
+          score_breakdown?: Json
+          set_id?: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_items_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_serving_nutrition"
+            referencedColumns: ["food_id"]
+          },
+          {
+            foreignKeyName: "recommendation_items_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_items_set_id_user_id_fkey"
+            columns: ["set_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_sets"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "recommendation_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recommendation_sets: {
+        Row: {
+          context: Json
+          created_at: string
+          engine_version: string
+          expires_at: string
+          id: string
+          local_date: string
+          meal_type: string
+          mode: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          engine_version: string
+          expires_at?: string
+          id?: string
+          local_date: string
+          meal_type: string
+          mode: string
+          user_id?: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          engine_version?: string
+          expires_at?: string
+          id?: string
+          local_date?: string
+          meal_type?: string
+          mode?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_dietary_preferences: {
         Row: {
           allergies: string[]
+          budget: string | null
           created_at: string
           cuisines: string[]
           diet: string | null
           dislikes: string[]
+          equipment: string[] | null
+          excluded_ingredients: string[]
+          max_prep_minutes: number | null
           meal_preferences: string[]
           notes: string | null
+          preferred_meal_styles: string[]
           updated_at: string
           user_id: string
         }
         Insert: {
           allergies?: string[]
+          budget?: string | null
           created_at?: string
           cuisines?: string[]
           diet?: string | null
           dislikes?: string[]
+          equipment?: string[] | null
+          excluded_ingredients?: string[]
+          max_prep_minutes?: number | null
           meal_preferences?: string[]
           notes?: string | null
+          preferred_meal_styles?: string[]
           updated_at?: string
           user_id: string
         }
         Update: {
           allergies?: string[]
+          budget?: string | null
           created_at?: string
           cuisines?: string[]
           diet?: string | null
           dislikes?: string[]
+          equipment?: string[] | null
+          excluded_ingredients?: string[]
+          max_prep_minutes?: number | null
           meal_preferences?: string[]
           notes?: string | null
+          preferred_meal_styles?: string[]
           updated_at?: string
           user_id?: string
         }
@@ -737,7 +1402,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      food_serving_nutrition: {
+        Row: {
+          calories: number | null
+          carbs_g: number | null
+          fat_g: number | null
+          food_id: string | null
+          protein_g: number | null
+          quality_flags: string[] | null
+          serving_grams: number | null
+          serving_label: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       activity_factor: { Args: { p_level: string }; Returns: number }
@@ -874,6 +1551,7 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      new_recipe_version: { Args: { p_recipe_id: string }; Returns: string }
       normalize_brand: { Args: { p: string }; Returns: string }
       normalize_food_name: { Args: { p: string }; Returns: string }
       portion_nutrition: {
@@ -886,9 +1564,164 @@ export type Database = {
         }
         Returns: Record<string, unknown>
       }
+      publish_recipe: {
+        Args: { p_recipe_id: string; p_reviewer: string }
+        Returns: Json
+      }
       recalculate_user_streak: {
         Args: { p_reset_badges?: boolean; p_user: string }
         Returns: undefined
+      }
+      recipe_nutrition: {
+        Args: { p_recipe_id: string; p_servings?: number }
+        Returns: {
+          complete: boolean
+          missing: string[]
+          missing_nutrients: string[]
+          per_serving: Json
+          recipe_id: string
+          scale: number
+          servings: number
+          total: Json
+        }[]
+      }
+      recipe_nutrition_json: {
+        Args: { p_divisor: number; s: Record<string, unknown> }
+        Returns: Json
+      }
+      recipe_portion: {
+        Args: { p_portions: number; p_recipe_id: string }
+        Returns: Json
+      }
+      recipe_scaled_ingredients: {
+        Args: { p_recipe_id: string; p_servings?: number }
+        Returns: {
+          food_id: string
+          food_name: string
+          grams: number
+          ingredient_no: number
+          optional: boolean
+          preparation: string
+          quantity: number
+          unit: string
+        }[]
+      }
+      recipe_sums: {
+        Args: { p_recipe_id: string; p_scale: number }
+        Returns: {
+          carbs_g: number
+          fat_g: number
+          fiber_g: number
+          grams: number
+          ingredient_count: number
+          kcal: number
+          missing: string[]
+          missing_nutrients: string[]
+          protein_g: number
+          saturated_fat_g: number
+          sodium_g: number
+          sugars_g: number
+        }[]
+      }
+      recommendation_attributes: {
+        Args: { p_food_ids: string[] }
+        Returns: {
+          allergen_status: string
+          allergens: string[]
+          diet_classes: string[]
+          diet_status: string
+          jain_compatible: boolean
+          quality_flags: string[]
+          vegan_compatible: boolean
+        }[]
+      }
+      recommendation_food_candidates: {
+        Args: never
+        Returns: {
+          allergen_status: string
+          allergens: string[]
+          calories: number
+          carbs_g: number
+          category: string
+          completeness: number
+          countable: boolean
+          diet_classes: string[]
+          diet_status: string
+          fat_g: number
+          food_id: string
+          food_kind: string
+          jain_compatible: boolean
+          meal_types: string[]
+          name: string
+          protein_g: number
+          quality_flags: string[]
+          regions: string[]
+          serving_grams: number
+          serving_label: string
+          source: string
+          vegan_compatible: boolean
+          verification: string
+        }[]
+      }
+      recommendation_recipe_candidates: {
+        Args: never
+        Returns: {
+          allergen_status: string
+          allergens: string[]
+          complete: boolean
+          cook_minutes: number
+          description: string
+          diet_classes: string[]
+          diet_status: string
+          dish_types: string[]
+          equipment: string[]
+          family_id: string
+          ingredients: Json
+          jain_compatible: boolean
+          main_food_id: string
+          main_food_name: string
+          meal_types: string[]
+          missing: string[]
+          missing_nutrients: string[]
+          name: string
+          per_serving: Json
+          prep_minutes: number
+          quality_flags: string[]
+          quantities_estimated: boolean
+          recipe_id: string
+          regions: string[]
+          serving_label: string
+          servings: number
+          slug: string
+          source: string
+          variant: string
+          vegan_compatible: boolean
+          verification: string
+          version: number
+        }[]
+      }
+      recommendation_template_candidates: {
+        Args: never
+        Returns: {
+          allergen_status: string
+          allergens: string[]
+          complete: boolean
+          components: Json
+          description: string
+          diet_classes: string[]
+          diet_status: string
+          jain_compatible: boolean
+          main_food_id: string
+          main_food_name: string
+          meal_types: string[]
+          name: string
+          quality_flags: string[]
+          regions: string[]
+          slug: string
+          template_id: string
+          vegan_compatible: boolean
+          version: number
+        }[]
       }
       respond_to_friend_request: {
         Args: { p_accept: boolean; p_request_id: string }

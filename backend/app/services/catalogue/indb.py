@@ -56,6 +56,13 @@ MICRONUTRIENT_COLUMNS = (
 _ASSUME_WATER_DENSITY = {"beverage", "soup"}
 
 
+
+# INDB recipe values count ALL the oil used in cooking (e.g. frying) as eaten,
+# so fried dishes come out implausibly fatty (poori 78 g fat/100 g, samosa 59 g).
+# The values are kept as published, but flagged: proposals warn about them and
+# recommendations skip them.
+COOKING_OIL_FAT_THRESHOLD = 35.0
+
 def _num(row: Mapping[str, Any], column: str, *, required: bool = True) -> float | None:
     value = row.get(column)
     if value is None or (isinstance(value, str) and not value.strip()):
@@ -105,7 +112,8 @@ def map_row(row: Mapping[str, Any], source_version: str) -> FoodRecord:
         cuisine_tags=["indian_databank"],
         basis="g",
         density_g_per_ml=1.0 if is_liquid_like else None,
-        quality_flags=["density_assumed"] if is_liquid_like else [],
+        quality_flags=(["density_assumed"] if is_liquid_like else [])
+        + (["cooking_oil_uncertain"] if (_num(row, "fat_g") or 0) > COOKING_OIL_FAT_THRESHOLD else []),
         verification="curated",
         aliases=[AliasRecord(alias=v, kind=k, source="indb_name") for v, k in variants],
     )

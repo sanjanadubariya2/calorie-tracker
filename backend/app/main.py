@@ -18,7 +18,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import assistant, daily_status, foods, health, meal_images, recognition
+from app.api.routes import assistant, daily_status, foods, health, meal_images, recognition, recommendations
 from app.assistant.proposals import ProposalService, ProposalStore, SupabaseProposalStore
 from app.assistant.service import AssistantService
 from app.assistant.store import AssistantWriter, ConversationStore, SupabaseConversationStore
@@ -28,6 +28,7 @@ from app.core.request_context import CorrelationIdMiddleware
 from app.core.security import JwksCache, TokenVerifier
 from app.db.storage import SupabaseStorage
 from app.db.supabase import DatabaseError, DatabaseUnavailable, SupabaseRest
+from app.recommendations.repository import RecommendationRepository
 from app.services.catalogue.importer import OffImporter, _SlidingWindow
 from app.llm.factory import build_llm_service
 from app.llm.service import LLMService
@@ -56,6 +57,7 @@ def create_app(
                 settings, JwksCache(settings.jwks_url, http, settings.jwks_cache_seconds)
             )
             app.state.db = SupabaseRest(settings, http)
+            app.state.recommendations = RecommendationRepository(app.state.db)
             app.state.storage = SupabaseStorage(settings, http)
             app.state.off_importer = OffImporter(settings, http)
             app.state.settings = settings
@@ -71,6 +73,7 @@ def create_app(
             app.state.assistant = AssistantService(
                 assistant_store or SupabaseConversationStore(app.state.db, writer),
                 assistant_llm, default_registry(), settings, app.state.db, proposals,
+                recommendations=app.state.recommendations,
             )
             try:
                 yield
@@ -140,4 +143,5 @@ def create_app(
     app.include_router(meal_images.router)
     app.include_router(recognition.router)
     app.include_router(assistant.router)
+    app.include_router(recommendations.router)
     return app

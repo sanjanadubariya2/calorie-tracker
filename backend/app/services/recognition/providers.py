@@ -150,7 +150,7 @@ class GeminiProvider:
         for model in self._models:
             try:
                 return await self._recognize_with(model, request)
-            except (ProviderTimeout, ProviderUnavailable) as exc:
+            except (ProviderTimeout, ProviderUnavailable, ProviderRateLimited) as exc:
                 if "credentials" in str(exc) or "rejected request" in str(exc):
                     raise  # the same problem on every model
                 logger.warning("Recognition model %s failed (%s); %s", model, type(exc).__name__,

@@ -186,6 +186,15 @@ class LogEntry(BaseModel):
     source: str | None
 
 
+class DayTotal(BaseModel):
+    date: dt.date
+    calories_kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    entries: int
+
+
 class RecentLogsResult(BaseModel):
     start_date: dt.date
     end_date: dt.date
@@ -193,6 +202,9 @@ class RecentLogsResult(BaseModel):
     entries: list[LogEntry]
     returned: int
     more_available: bool
+    # Sums of the returned entries per day (so totals come from here, not mental arithmetic).
+    # Only complete when more_available is false; otherwise use get_nutrition_history.
+    totals_by_date: list[DayTotal]
 
 
 async def run_recent_logs(ctx: ToolContext, args: RecentLogsArgs) -> RecentLogsResult:
@@ -217,8 +229,19 @@ async def run_recent_logs(ctx: ToolContext, args: RecentLogsArgs) -> RecentLogsR
         )
         for r in rows[: args.limit]
     ]
+    by_day: dict[dt.date, DayTotal] = {}
+    for e in entries:
+        t = by_day.setdefault(e.date, DayTotal(date=e.date, calories_kcal=0, protein_g=0, carbs_g=0, fat_g=0, entries=0))
+        t.calories_kcal += e.calories_kcal
+        t.protein_g += e.protein_g
+        t.carbs_g += e.carbs_g
+        t.fat_g += e.fat_g
+        t.entries += 1
+    totals = [DayTotal(date=t.date, calories_kcal=round(t.calories_kcal, 1), protein_g=round(t.protein_g, 1),
+                       carbs_g=round(t.carbs_g, 1), fat_g=round(t.fat_g, 1), entries=t.entries)
+              for t in sorted(by_day.values(), key=lambda x: x.date, reverse=True)]
     return RecentLogsResult(start_date=start, end_date=end, meal_type=args.meal_type, entries=entries,
-                            returned=len(entries), more_available=len(rows) > args.limit)
+                            returned=len(entries), more_available=len(rows) > args.limit, totals_by_date=totals)
 
 
 GET_RECENT_FOOD_LOGS = Tool(

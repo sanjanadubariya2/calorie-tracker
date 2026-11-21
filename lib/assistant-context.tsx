@@ -1,7 +1,7 @@
 // Assistant state for the whole app (mounted in app/_layout.tsx), so switching
 // tabs keeps the open conversation, its messages and any pending reply.
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useAuth } from "./auth-context";
 import * as api from "./assistant";
 import { AssistantError, type FoodLogProposal, type ItemEdit, type SavedLog } from "./assistant";
@@ -18,6 +18,10 @@ interface AssistantContextValue {
   loadOlder: () => Promise<void>;
   confirm: (proposalId: string, edits: { meal_type?: string; items?: ItemEdit[] }) => Promise<SavedLog[]>;
   reject: (proposalId: string) => Promise<void>;
+  /** Text waiting in the composer (e.g. "Ask the assistant" from a recommendation). Never sent automatically. */
+  pendingDraft: string | null;
+  compose: (text: string) => void;
+  takeDraft: () => string | null;
 }
 
 const AssistantContext = createContext<AssistantContextValue | null>(null);
@@ -28,11 +32,23 @@ export function AssistantProvider({ children }: { children: React.ReactNode }) {
   const stateRef = useRef(state);
   stateRef.current = state;
   const inFlight = useRef(new Set<string>());       // synchronous duplicate-request guard
+  const [pendingDraft, setPendingDraft] = useState<string | null>(null);
+  const draftOwner = useRef(userId);
+  const compose = useCallback((text: string) => setPendingDraft(text), []);
+  const takeDraft = useCallback(() => {
+    let taken: string | null = null;
+    setPendingDraft((d) => { taken = d; return null; });
+    return taken;
+  }, []);
 
   // A different (or no) user never sees the previous user's conversations.
   useEffect(() => {
     dispatch({ type: "reset" });
     inFlight.current.clear();
+    if (draftOwner.current !== userId) {            // another user never inherits a draft
+      draftOwner.current = userId;
+      setPendingDraft(null);
+    }
   }, [userId]);
 
   const guard = useCallback(<T,>(error: unknown): T => {
@@ -168,8 +184,9 @@ export function AssistantProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AssistantContextValue>(() => ({
     state, available: api.assistantAvailable(), loadConversations, openConversation, removeConversation, send, retry,
-    loadOlder, confirm, reject,
-  }), [state, loadConversations, openConversation, removeConversation, send, retry, loadOlder, confirm, reject]);
+    loadOlder, confirm, reject, pendingDraft, compose, takeDraft,
+  }), [state, loadConversations, openConversation, removeConversation, send, retry, loadOlder, confirm, reject,
+       pendingDraft, compose, takeDraft]);
 
   return <AssistantContext.Provider value={value}>{children}</AssistantContext.Provider>;
 }

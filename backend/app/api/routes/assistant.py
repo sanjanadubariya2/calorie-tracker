@@ -9,12 +9,20 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
+from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request, Response, status
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.deps import get_db
-from app.assistant.preferences import PreferencesIn, PreferencesOut, delete_preferences, get_preferences, put_preferences
+from app.assistant.preferences import (
+    PreferencesIn,
+    PreferencesOut,
+    delete_preferences,
+    get_preferences,
+    patch_preferences,
+    put_preferences,
+)
 from app.assistant.proposals import (
     ConfirmRequest,
     ConfirmResult,
@@ -376,6 +384,20 @@ async def read_preferences(user: AuthenticatedUser = Depends(get_current_user),
 async def save_preferences(body: PreferencesIn, user: AuthenticatedUser = Depends(get_current_user),
                            db: SupabaseRest = Depends(get_db)) -> PreferencesOut:
     return await put_preferences(db, user, body)
+
+
+@router.patch("/v1/me/preferences", response_model=PreferencesOut, tags=["preferences"],
+              summary="Change some of your dietary preferences (null clears a field, [] empties a list)")
+async def update_preferences(changes: dict[str, Any] = Body(...), user: AuthenticatedUser = Depends(get_current_user),
+                             db: SupabaseRest = Depends(get_db)) -> PreferencesOut:
+    unknown = sorted(set(changes) - set(PreferencesIn.model_fields))
+    if unknown:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Unknown field: {', '.join(unknown)}")
+    try:
+        return await patch_preferences(db, user, changes)
+    except ValidationError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=[{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()]) from None
 
 
 @router.delete("/v1/me/preferences", status_code=status.HTTP_204_NO_CONTENT, tags=["preferences"],

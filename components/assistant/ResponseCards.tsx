@@ -131,20 +131,27 @@ export function RecommendationsView({ card, onAsk }: { card: RecommendationsCard
         For {card.meal_type.replace("_", " ")} · about {fmt(card.meal_target.calories_kcal)} kcal
         {card.meal_target.protein_g ? `, ${fmt(card.meal_target.protein_g)} g protein` : ""}
       </Text>
-      {card.recommendations.map((r) => (
-        <Pressable key={r.food_id} onPress={onAsk ? () => onAsk(`Log ${r.serving_label} of ${r.name}`) : undefined}
-          disabled={!onAsk} testID={`recommendation-${r.food_id}`}>
-          <FoodRow
-            name={r.name}
-            detail={`${r.serving_label} (${fmt(r.serving_g)} g) · C ${fmt(r.nutrition.carbs_g, 1)} g · F ${fmt(r.nutrition.fat_g, 1)} g`}
-            sub={r.reasons.find((x) => x.includes("logged")) ? "You've had this before" : undefined}
-            kcal={`${fmt(r.nutrition.calories_kcal)} kcal`}
-            protein={`P ${fmt(r.nutrition.protein_g, 1)} g`}
-          />
-        </Pressable>
-      ))}
-      {[...card.notes, ...card.cautions].map((n) => <Text key={n} style={styles.note}>{n}</Text>)}
-      {onAsk && card.recommendations.length > 0 && <Text style={styles.hint}>Tap a food to log it.</Text>}
+      {card.recommendations.map((r) => {
+        const portions = r.portions.map((p) => (p.servings === 1 ? p.serving_label : `${fmt(p.servings, 1)} × ${p.serving_label}`)).join(" + ");
+        // Single dishes can be logged from chat; recipes and meals from the Meals tab.
+        const loggable = onAsk && r.kind === "food";
+        return (
+          <Pressable key={r.key} onPress={loggable ? () => onAsk(`Log ${portions} of ${r.name}`) : undefined}
+            disabled={!loggable} testID={`recommendation-${r.key}`}>
+            <FoodRow
+              name={r.name}
+              detail={`${portions} · C ${fmt(r.nutrition.carbs_g, 1)} g · F ${fmt(r.nutrition.fat_g, 1)} g`}
+              sub={r.warnings[0]}
+              kcal={`${fmt(r.nutrition.calories_kcal)} kcal`}
+              protein={`P ${fmt(r.nutrition.protein_g, 1)} g`}
+            />
+          </Pressable>
+        );
+      })}
+      {card.notes.map((n) => <Text key={n} style={styles.note}>{n}</Text>)}
+      {onAsk && card.recommendations.some((r) => r.kind === "food") && (
+        <Text style={styles.hint}>Tap a dish to log it. Recipes and meals can be logged from the Meals tab.</Text>
+      )}
     </View>
   );
 }

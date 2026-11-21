@@ -469,6 +469,7 @@ def _fallback_provider(monkeypatch: pytest.MonkeyPatch, by_model: dict[str, Any]
     lambda: _api_error(genai_errors.ServerError, 503),
     lambda: _api_error(genai_errors.ServerError, 504),
     lambda: httpx.ReadTimeout("slow"),
+    lambda: _api_error(genai_errors.ClientError, 429),        # quotas are per model
 ])
 def test_overloaded_model_falls_back(monkeypatch: pytest.MonkeyPatch, primary_failure: Callable[[], Exception]) -> None:
     ok = _response(json.dumps(output(item("Dal"))))
@@ -482,7 +483,6 @@ def test_overloaded_model_falls_back(monkeypatch: pytest.MonkeyPatch, primary_fa
 @pytest.mark.parametrize("failure,expected", [
     (lambda: _api_error(genai_errors.ClientError, 401), ProviderUnavailable),   # bad key: same on every model
     (lambda: _api_error(genai_errors.ClientError, 400), ProviderUnavailable),
-    (lambda: _api_error(genai_errors.ClientError, 429), ProviderRateLimited),   # our quota: don't burn it twice
 ])
 def test_no_fallback_for_request_problems(monkeypatch: pytest.MonkeyPatch, failure: Callable[[], Exception], expected: type) -> None:
     provider, tried = _fallback_provider(monkeypatch, {"gemini-3.8-flash": failure(), "gemini-3.5-flash-lite": _response("{}")})

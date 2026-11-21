@@ -26,3 +26,6 @@ __pycache__/
 
 # Licensed nutrition dataset (loaded with `python -m app.cli load-indb`); never commit it
 Anuvaad_INDB_*.xlsx
+
+# Assistant evaluation outputs (contain model transcripts)
+backend/evals/results/

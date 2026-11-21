@@ -1,0 +1,152 @@
+slug,position,food_ref,food_name_check,quantity,unit,grams,preparation,optional
+phulka,1,usda_fdc:168893,Whole wheat flour (atta),180,g,,,false
+phulka,2,usda_fdc:173468,Salt,2,g,,,false
+chapati-with-ghee,1,usda_fdc:168893,Whole wheat flour (atta),180,g,,,false
+chapati-with-ghee,2,usda_fdc:173412,Ghee,1,tbsp,12.8,,false
+chapati-with-ghee,3,usda_fdc:173468,Salt,2,g,,,false
+dal-tadka,1,usda_fdc:172436,Toor dal (raw),150,g,,rinsed,false
+dal-tadka,2,usda_fdc:170000,Onion,60,g,,chopped,false
+dal-tadka,3,usda_fdc:170457,Tomato,100,g,,chopped,false
+dal-tadka,4,usda_fdc:173412,Ghee,15,g,,,false
+dal-tadka,5,usda_fdc:169230,Garlic (raw),3,clove,9,chopped,false
+dal-tadka,6,usda_fdc:169231,Ginger (raw),5,g,,grated,false
+dal-tadka,7,usda_fdc:170497,Green chilli (raw),5,g,,slit,false
+dal-tadka,8,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+dal-tadka,9,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+dal-tadka,10,usda_fdc:171319,Chilli powder,1,tsp,2.7,,false
+dal-tadka,11,usda_fdc:173468,Salt,1,tsp,6,,false
+dal-tadka,12,usda_fdc:169997,Coriander leaves,5,g,,chopped,true
+moong-dal,1,usda_fdc:174256,Moong (raw),150,g,,rinsed,false
+moong-dal,2,usda_fdc:173412,Ghee,10,g,,,false
+moong-dal,3,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+moong-dal,4,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+moong-dal,5,usda_fdc:173468,Salt,1,tsp,6,,false
+steamed-rice,1,usda_fdc:168877,White rice (raw),225,g,,rinsed,false
+jeera-rice,1,usda_fdc:168877,White rice (raw),225,g,,rinsed,false
+jeera-rice,2,usda_fdc:173412,Ghee,15,g,,,false
+jeera-rice,3,usda_fdc:170923,Cumin seeds,2,tsp,4.2,,false
+jeera-rice,4,usda_fdc:173468,Salt,4,g,,,false
+aloo-gobi,1,usda_fdc:170026,Potato (raw),250,g,,cubed,false
+aloo-gobi,2,usda_fdc:169986,Cauliflower (raw),300,g,,florets,false
+aloo-gobi,3,usda_fdc:170000,Onion,80,g,,chopped,false
+aloo-gobi,4,usda_fdc:170457,Tomato,100,g,,chopped,false
+aloo-gobi,5,usda_fdc:171017,Sunflower oil,30,g,,,false
+aloo-gobi,6,usda_fdc:169231,Ginger (raw),5,g,,grated,false
+aloo-gobi,7,usda_fdc:172231,Turmeric powder,2,g,,,false
+aloo-gobi,8,usda_fdc:171319,Chilli powder,1,tsp,2.7,,false
+aloo-gobi,9,usda_fdc:170922,Coriander powder,2,tsp,3.6,,false
+aloo-gobi,10,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+aloo-gobi,11,usda_fdc:173468,Salt,1,tsp,6,,false
+aloo-gobi,12,usda_fdc:169997,Coriander leaves,5,g,,chopped,true
+aloo-palak,1,usda_fdc:170026,Potato (raw),250,g,,cubed,false
+aloo-palak,2,usda_fdc:168462,Spinach (raw),400,g,,chopped,false
+aloo-palak,3,usda_fdc:170000,Onion,80,g,,chopped,false
+aloo-palak,4,usda_fdc:170457,Tomato,80,g,,chopped,false
+aloo-palak,5,usda_fdc:169230,Garlic (raw),3,clove,9,chopped,false
+aloo-palak,6,usda_fdc:171017,Sunflower oil,25,g,,,false
+aloo-palak,7,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+aloo-palak,8,usda_fdc:171319,Chilli powder,1,tsp,2.7,,false
+aloo-palak,9,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+aloo-palak,10,usda_fdc:173468,Salt,5,g,,,false
+bhindi-masala,1,usda_fdc:169260,Okra (raw),300,g,,sliced,false
+bhindi-masala,2,usda_fdc:170000,Onion,80,g,,sliced,false
+bhindi-masala,3,usda_fdc:172337,Mustard oil,25,g,,,false
+bhindi-masala,4,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+bhindi-masala,5,usda_fdc:171319,Chilli powder,1,tsp,2.7,,false
+bhindi-masala,6,usda_fdc:170922,Coriander powder,2,tsp,3.6,,false
+bhindi-masala,7,usda_fdc:173468,Salt,4,g,,,false
+rajma-masala,1,usda_fdc:173744,Rajma (dry),200,g,,soaked overnight,false
+rajma-masala,2,usda_fdc:170000,Onion,120,g,,chopped,false
+rajma-masala,3,usda_fdc:170457,Tomato,200,g,,pureed,false
+rajma-masala,4,usda_fdc:169231,Ginger (raw),10,g,,grated,false
+rajma-masala,5,usda_fdc:169230,Garlic (raw),4,clove,12,crushed,false
+rajma-masala,6,usda_fdc:171017,Sunflower oil,30,g,,,false
+rajma-masala,7,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+rajma-masala,8,usda_fdc:171319,Chilli powder,2,tsp,5.4,,false
+rajma-masala,9,usda_fdc:170922,Coriander powder,2,tsp,3.6,,false
+rajma-masala,10,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+rajma-masala,11,usda_fdc:173468,Salt,8,g,,,false
+chole-masala,1,usda_fdc:173756,Kabuli chana (dry),200,g,,soaked overnight,false
+chole-masala,2,usda_fdc:170000,Onion,120,g,,chopped,false
+chole-masala,3,usda_fdc:170457,Tomato,200,g,,pureed,false
+chole-masala,4,usda_fdc:169231,Ginger (raw),10,g,,grated,false
+chole-masala,5,usda_fdc:169230,Garlic (raw),4,clove,12,crushed,false
+chole-masala,6,usda_fdc:171017,Sunflower oil,30,g,,,false
+chole-masala,7,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+chole-masala,8,usda_fdc:171319,Chilli powder,2,tsp,5.4,,false
+chole-masala,9,usda_fdc:170922,Coriander powder,2,tsp,3.6,,false
+chole-masala,10,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+chole-masala,11,usda_fdc:173468,Salt,8,g,,,false
+idli,1,usda_fdc:168877,White rice (raw),200,g,,soaked,false
+idli,2,usda_fdc:174259,Urad (raw),100,g,,soaked,false
+idli,3,usda_fdc:173468,Salt,5,g,,,false
+plain-dosa,1,usda_fdc:168877,White rice (raw),200,g,,soaked,false
+plain-dosa,2,usda_fdc:174259,Urad (raw),70,g,,soaked,false
+plain-dosa,3,usda_fdc:171017,Sunflower oil,16,g,,for the tawa,false
+plain-dosa,4,usda_fdc:173468,Salt,5,g,,,false
+besan-chilla,1,usda_fdc:174288,Besan (gram flour),120,g,,,false
+besan-chilla,2,usda_fdc:170000,Onion,40,g,,finely chopped,false
+besan-chilla,3,usda_fdc:170457,Tomato,40,g,,finely chopped,false
+besan-chilla,4,usda_fdc:170497,Green chilli (raw),5,g,,chopped,false
+besan-chilla,5,usda_fdc:169997,Coriander leaves,5,g,,chopped,false
+besan-chilla,6,usda_fdc:172231,Turmeric powder,1,g,,,false
+besan-chilla,7,usda_fdc:173468,Salt,3,g,,,false
+besan-chilla,8,usda_fdc:171017,Sunflower oil,12,g,,for cooking,false
+moong-dal-chilla,1,usda_fdc:174256,Moong (raw),120,g,,soaked,false
+moong-dal-chilla,2,usda_fdc:169231,Ginger (raw),5,g,,,false
+moong-dal-chilla,3,usda_fdc:170497,Green chilli (raw),5,g,,,false
+moong-dal-chilla,4,usda_fdc:173468,Salt,3,g,,,false
+moong-dal-chilla,5,usda_fdc:171017,Sunflower oil,12,g,,for cooking,false
+moong-dal-khichdi,1,usda_fdc:168877,White rice (raw),120,g,,rinsed,false
+moong-dal-khichdi,2,usda_fdc:174256,Moong (raw),60,g,,rinsed,false
+moong-dal-khichdi,3,usda_fdc:173412,Ghee,10,g,,,false
+moong-dal-khichdi,4,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+moong-dal-khichdi,5,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+moong-dal-khichdi,6,usda_fdc:173468,Salt,5,g,,,false
+curd-rice,1,usda_fdc:168877,White rice (raw),120,g,,,false
+curd-rice,2,usda_fdc:171284,Curd (plain yogurt),250,g,,,false
+curd-rice,3,usda_fdc:170929,Mustard seeds,1,tsp,2,,false
+curd-rice,4,usda_fdc:171017,Sunflower oil,5,g,,,false
+curd-rice,5,usda_fdc:169231,Ginger (raw),3,g,,,false
+curd-rice,6,usda_fdc:170497,Green chilli (raw),3,g,,,false
+curd-rice,7,usda_fdc:173468,Salt,3,g,,,false
+cucumber-raita,1,usda_fdc:171284,Curd (plain yogurt),300,g,,whisked,false
+cucumber-raita,2,usda_fdc:168409,Cucumber,150,g,,grated,false
+cucumber-raita,3,usda_fdc:170923,Cumin seeds,1,tsp,2.1,roasted and ground,false
+cucumber-raita,4,usda_fdc:173468,Salt,3,g,,,false
+chicken-curry,1,usda_fdc:173627,Chicken thigh (raw skinless),500,g,,boneless pieces,false
+chicken-curry,2,usda_fdc:170000,Onion,200,g,,sliced,false
+chicken-curry,3,usda_fdc:170457,Tomato,200,g,,pureed,false
+chicken-curry,4,usda_fdc:169231,Ginger (raw),15,g,,paste,false
+chicken-curry,5,usda_fdc:169230,Garlic (raw),5,clove,15,paste,false
+chicken-curry,6,usda_fdc:171017,Sunflower oil,40,g,,,false
+chicken-curry,7,usda_fdc:172231,Turmeric powder,2,g,,,false
+chicken-curry,8,usda_fdc:171319,Chilli powder,2,tsp,5.4,,false
+chicken-curry,9,usda_fdc:170922,Coriander powder,5,g,,,false
+chicken-curry,10,usda_fdc:170923,Cumin seeds,1,tsp,2.1,,false
+chicken-curry,11,usda_fdc:173468,Salt,8,g,,,false
+egg-curry,1,usda_fdc:171287,Egg (raw whole),8,piece,400,boiled and peeled,false
+egg-curry,2,usda_fdc:170000,Onion,150,g,,chopped,false
+egg-curry,3,usda_fdc:170457,Tomato,150,g,,chopped,false
+egg-curry,4,usda_fdc:171017,Sunflower oil,30,g,,,false
+egg-curry,5,usda_fdc:169231,Ginger (raw),8,g,,grated,false
+egg-curry,6,usda_fdc:169230,Garlic (raw),3,clove,9,crushed,false
+egg-curry,7,usda_fdc:172231,Turmeric powder,0.5,tsp,1.5,,false
+egg-curry,8,usda_fdc:171319,Chilli powder,1,tsp,2.7,,false
+egg-curry,9,usda_fdc:170922,Coriander powder,2,tsp,3.6,,false
+egg-curry,10,usda_fdc:173468,Salt,6,g,,,false
+masala-omelette,1,usda_fdc:171287,Egg (raw whole),2,piece,100,beaten,false
+masala-omelette,2,usda_fdc:170000,Onion,20,g,,finely chopped,false
+masala-omelette,3,usda_fdc:170457,Tomato,20,g,,finely chopped,false
+masala-omelette,4,usda_fdc:170497,Green chilli (raw),3,g,,chopped,false
+masala-omelette,5,usda_fdc:169997,Coriander leaves,2,g,,chopped,true
+masala-omelette,6,usda_fdc:171017,Sunflower oil,5,g,,,false
+masala-omelette,7,usda_fdc:173468,Salt,1,g,,,false
+rava-upma,1,usda_fdc:169715,Semolina (rava),120,g,,dry roasted,false
+rava-upma,2,usda_fdc:170000,Onion,50,g,,chopped,false
+rava-upma,3,usda_fdc:170419,Green peas (raw),40,g,,,false
+rava-upma,4,usda_fdc:171017,Sunflower oil,15,g,,,false
+rava-upma,5,usda_fdc:170929,Mustard seeds,1,tsp,2,,false
+rava-upma,6,usda_fdc:170497,Green chilli (raw),4,g,,chopped,false
+rava-upma,7,usda_fdc:169231,Ginger (raw),4,g,,grated,false
+rava-upma,8,usda_fdc:173468,Salt,4,g,,,false

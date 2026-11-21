@@ -284,6 +284,7 @@ const WARNING_TEXT: Record<string, string> = {
   some_nutrients_missing: "Some nutrients aren't available for this food.",
   catalogue_data_inconsistent: "The database values for this food look inconsistent.",
   low_recognition_confidence: "The AI wasn't sure about this item. Check it.",
+  cooking_oil_uncertain: "Database values for this dish count all the cooking oil; the real amount is likely lower.",
 };
 
 export function warningText(code: string): string {
@@ -303,6 +304,8 @@ export const MATCH_LABEL: Record<string, string> = {
 
 const SOURCE_LABEL: Record<string, string> = {
   indb: "Indian Nutrient Databank",
+  usda_fdc: "USDA FoodData Central",
+  recipe: "Published recipe (sum of its ingredients)",
   open_food_facts: "Open Food Facts",
   curated: "Curated",
   manual: "Manual entry",

@@ -191,3 +191,13 @@ def test_off_beverage_is_per_100_ml_with_assumed_density() -> None:
 def test_off_impossible_values_refused() -> None:
     with pytest.raises(RecordError):
         off.map_product(_product(**{"carbohydrates_100g": 90, "fat_100g": 40}), "123456")
+
+
+def test_recipes_with_implausible_fat_are_flagged() -> None:
+    from app.services.catalogue import indb
+
+    base = {"food_code": "X1", "food_name": "Test dish", "energy_kcal": 300, "carb_g": 30, "protein_g": 5,
+            "fibre_g": 1, "freesugar_g": 1, "sfa_mg": 1000, "sodium_mg": 100, "servings_unit": "piece",
+            "unit_serving_energy_kcal": 150}
+    assert "cooking_oil_uncertain" in indb.map_row({**base, "fat_g": 59.0}, "2024.11").quality_flags
+    assert "cooking_oil_uncertain" not in indb.map_row({**base, "fat_g": 12.0}, "2024.11").quality_flags

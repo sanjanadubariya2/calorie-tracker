@@ -76,24 +76,28 @@ export interface FoodResult {
   match: { confidence: number; match_type: string };
 }
 
+/** One recommend_meals result (the same engine and numbers as the Meals tab). */
 export interface Recommendation {
-  food_id: string;
+  key: string;
+  kind: "recipe" | "combo" | "meal" | "food";
   name: string;
-  category: string | null;
-  serving_label: string;
-  serving_g: number;
+  variant: string | null;
+  food_id: string | null;
+  portions: { name: string; servings: number; serving_label: string; grams: number | null }[];
   nutrition: { calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number };
-  source: string;
-  source_ref: string | null;
+  total_minutes: number | null;
+  score: number;
+  fit: "strong" | "good" | "fair";
   reasons: string[];
+  warnings: string[];
 }
 
 export interface RecommendationsCard {
   meal_type: string;
-  meal_target: { calories_kcal: number; protein_g: number | null };
+  status: string;
+  meal_target: { calories_kcal: number; protein_g: number; carbs_g: number; fat_g: number; basis: string };
   recommendations: Recommendation[];
-  filters_applied: string[];
-  cautions: string[];
+  excluded: { reason: string; label: string; count: number }[];
   notes: string[];
 }
 
@@ -102,12 +106,14 @@ export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "morning_snack", "aft
 export type AssistantMealType = (typeof MEAL_TYPES)[number];
 
 export interface ProposedFood {
-  food_id: string;
+  food_id: string | null;                 // null for a recipe
   food_name: string;
   requested_name: string;
   quantity: number | null;
   unit: string | null;
-  grams: number;
+  grams: number | null;                   // null for a recipe (priced by servings)
+  recipe_id?: string | null;
+  recipe_servings?: number | null;
   quantity_source: string;
   portion_is_estimate: boolean;
   portion_explanation: string;

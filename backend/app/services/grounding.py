@@ -244,6 +244,8 @@ async def ground_item(db: SupabaseRest, user: AuthenticatedUser, item: ProposalI
 
     if selected is not None and "energy_mismatch" in selected.quality_flags:
         warnings.append("catalogue_data_inconsistent")
+    if selected is not None and "cooking_oil_uncertain" in selected.quality_flags:
+        warnings.append("cooking_oil_uncertain")
 
     # 2. Portion
     portion, portion_level, portion_warnings = resolve_portion(item, context)

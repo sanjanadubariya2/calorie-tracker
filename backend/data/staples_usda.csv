@@ -1,0 +1,74 @@
+fdc_id,name,aliases,category,food_kind,default_portion,default_label,extra_portions,note,flags
+171265,Milk (whole),milk|full cream milk|whole milk|doodh,dairy,beverage,1 cup,1 cup (244 g),1 tbsp=1 tablespoon,USDA whole milk 3.25% fat,
+170870,Milk (reduced fat 2%),reduced fat milk|low fat milk,dairy,beverage,1 cup,1 cup (245 g),,,
+171269,Milk (skimmed),skim milk|skimmed milk|fat free milk,dairy,beverage,1 cup,1 cup (245 g),,,
+171284,Curd (plain yogurt),dahi|curd|plain yogurt|plain yoghurt,dairy,ingredient,1 cup (8 fl oz),1 cup (245 g),0.5 container (4 oz)=1/2 cup (113 g),USDA plain whole-milk yogurt,
+170886,Curd (low fat),low fat dahi|low fat curd|low fat yogurt,dairy,ingredient,1 cup (8 fl oz),1 cup (245 g),,USDA plain low-fat yogurt,
+170874,Buttermilk (cultured),cultured buttermilk,dairy,beverage,1 cup,1 cup (245 g),,USDA cultured low-fat buttermilk; Indian chaas is usually more diluted,
+173412,Ghee,desi ghee|clarified butter,other,ingredient,1 tbsp,1 tablespoon (12.8 g),,USDA anhydrous butter oil,
+173944,Banana,kela,fruit,ingredient,1 medium,1 medium banana (118 g),1 small=1 small banana (101 g)|1 large=1 large banana (136 g),,
+171688,Apple,seb,fruit,ingredient,1 medium,1 medium apple (182 g),1 small=1 small apple (149 g),,
+169097,Orange,santra|narangi,fruit,ingredient,1 fruit,1 orange (131 g),,,
+169910,Mango,aam,fruit,ingredient,1 cup pieces,1 cup pieces (165 g),1 fruit without refuse=1 mango (336 g),,
+169926,Papaya,papita,fruit,ingredient,1 cup 1,1 cup pieces (145 g),,,
+173044,Guava,amrud,fruit,ingredient,1 fruit,1 guava (55 g),,,
+174683,Grapes,angoor,fruit,ingredient,1 cup,1 cup (151 g),10 grapes=10 grapes (49 g),,
+167765,Watermelon,tarbooz,fruit,ingredient,"1 cup, diced",1 cup diced (152 g),,,
+169134,Pomegranate,anar,fruit,ingredient,0.5 cup arils,1/2 cup arils (87 g),,,
+169124,Pineapple,ananas,fruit,ingredient,"1 cup, chunks",1 cup chunks (165 g),,,
+167759,Chikoo (sapodilla),chiku|sapota|sapodilla,fruit,ingredient,1 sapodilla,1 chikoo (170 g),,,
+169118,Pear,nashpati,fruit,ingredient,1 medium,1 medium pear (178 g),,,
+171726,Dates,khajoor|khajur,fruit,ingredient,"1 date, pitted",1 date (7.1 g),,USDA Deglet Noor dates,
+170567,Almonds,badam,nuts_seeds,ingredient,1 oz,28 g (about 23 almonds),1 almond=1 almond (1.2 g),,
+173806,Peanuts (dry roasted),roasted peanuts|moongphali|groundnuts,nuts_seeds,ingredient,1 oz,28 g handful,,unsalted,
+170162,Cashews,kaju,nuts_seeds,ingredient,1 oz,28 g (about 18 cashews),,raw,
+170187,Walnuts,akhrot,nuts_seeds,ingredient,1 oz,28 g (about 14 halves),,,
+170150,Sesame seeds,til,other,ingredient,1 tbsp,1 tablespoon (9 g),,,
+173424,Hard-boiled egg (whole),hard boiled egg|hard-boiled egg,egg_dish,ingredient,1 large,1 large egg (50 g),,"not aliased as 'boiled egg', which matches INDB's Boiled egg",
+168409,Cucumber,kheera|kakdi,vegetable,ingredient,0.5 cup slices,1/2 cup slices (52 g),1 cucumber=1 cucumber (301 g),with peel,
+170457,Tomato,tamatar,vegetable,ingredient,1 medium whole,1 medium tomato (123 g),,,
+170393,Carrot,gajar,vegetable,ingredient,1 medium,1 medium carrot (61 g),,,
+170000,Onion,pyaz|pyaaz,vegetable,ingredient,1 medium,1 medium onion (110 g),,,
+169957,Sprouted moong (raw),moong sprouts|mung bean sprouts|sprouts,legume,ingredient,1 cup,1 cup (104 g),,,
+173757,Boiled chickpeas,boiled kabuli chana|boiled chana|kabuli chana,legume,ingredient,1 cup,1 cup (164 g),,unsalted; not aliased as 'chole' (a curry),
+172421,Boiled lentils,boiled masoor,legume,ingredient,1 cup,1 cup (198 g),,plain boiled lentils (not a dal preparation),
+173904,Rolled oats (dry),oats|rolled oats|oatmeal dry,grain,ingredient,0.33 cup,1/3 cup dry (27 g),1 cup=1 cup dry (81 g),,
+172688,Whole wheat bread,brown bread|atta bread|wheat bread,bread,ingredient,1 slice,1 slice (32 g),,,
+170174,Coconut water,nariyal pani|tender coconut water,beverage,beverage,1 cup,1 cup (240 g),,,
+173227,Black tea (no milk or sugar),black tea|kali chai,beverage,beverage,1 cup (8 fl oz),1 cup (237 g),,INDB 'Hot tea' is tea with milk,
+171890,Black coffee (no milk or sugar),black coffee,beverage,beverage,1 cup (8 fl oz),1 cup (237 g),,,
+168893,Whole wheat flour (atta),atta|whole wheat atta|gehun ka atta,other,ingredient,1 cup,1 cup (120 g),,recipe ingredient,raw_ingredient
+168877,White rice (raw),uncooked rice|raw rice|chawal raw,other,ingredient,1 cup,1 cup raw (185 g),,recipe ingredient; long-grain,raw_ingredient
+172436,Toor dal (raw),arhar dal raw|toor dal raw|pigeon peas raw,other,ingredient,1 cup,1 cup raw (205 g),,USDA pigeon peas mature seeds raw,raw_ingredient
+174256,Moong (raw),moong dal raw|mung beans raw|green gram raw,other,ingredient,1 cup,1 cup raw (207 g),1 tbsp=1 tablespoon raw (13 g),USDA whole mung beans raw,raw_ingredient
+172420,Masoor (raw),masoor dal raw|red lentils raw|lentils raw,other,ingredient,1 cup,1 cup raw (192 g),,USDA lentils raw,raw_ingredient
+174288,Besan (gram flour),besan|gram flour|chickpea flour,other,ingredient,1 cup,1 cup (92 g),,,raw_ingredient
+174259,Urad (raw),urad dal raw|black gram raw,other,ingredient,1 cup,1 cup raw (207 g),,USDA mungo beans raw,raw_ingredient
+169715,Semolina (rava),rava|sooji|suji,other,ingredient,1 cup,1 cup (167 g),,USDA semolina enriched,raw_ingredient
+173744,Rajma (dry),rajma raw|kidney beans raw|dry rajma,other,ingredient,1 cup,1 cup dry (184 g),,,raw_ingredient
+173756,Kabuli chana (dry),kabuli chana raw|dry chickpeas|chickpeas raw,other,ingredient,1 cup,1 cup dry (200 g),,,raw_ingredient
+170026,Potato (raw),raw potato|aloo raw,other,ingredient,1 Potato medium,1 medium potato (213 g),,,raw_ingredient
+169986,Cauliflower (raw),raw cauliflower|gobhi raw,other,ingredient,1 cup chopped,1 cup chopped (107 g),,,raw_ingredient
+168462,Spinach (raw),raw spinach|palak raw,other,ingredient,1 cup,1 cup (30 g),1 bunch=1 bunch (340 g),,raw_ingredient
+170419,Green peas (raw),raw green peas|matar raw,other,ingredient,1 cup,1 cup (145 g),,,raw_ingredient
+169260,Okra (raw),raw okra|bhindi raw|lady finger raw,other,ingredient,1 cup,1 cup (100 g),,,raw_ingredient
+169228,Brinjal (raw),raw brinjal|baingan raw|eggplant raw,other,ingredient,"1 cup, cubes",1 cup cubes (82 g),,,raw_ingredient
+169975,Cabbage (raw),raw cabbage|patta gobhi raw,other,ingredient,"1 cup, chopped",1 cup chopped (89 g),,,raw_ingredient
+170497,Green chilli (raw),hari mirch|green chilli|green chili,other,ingredient,1 pepper,1 chilli (45 g),,USDA hot chili green,raw_ingredient
+169231,Ginger (raw),adrak|fresh ginger,other,ingredient,1 tsp,1 teaspoon (2 g),,,raw_ingredient
+169230,Garlic (raw),lehsun|garlic clove,other,ingredient,1 clove,1 clove (3 g),,,raw_ingredient
+169997,Coriander leaves,dhaniya patta|hara dhaniya|cilantro,other,ingredient,0.25 cup,1/4 cup (4 g),,,raw_ingredient
+172337,Mustard oil,sarson ka tel|kachi ghani oil,other,ingredient,1 tbsp,1 tablespoon (14 g),1 tsp=1 teaspoon (4.5 g),,
+171017,Sunflower oil,refined oil|cooking oil|vegetable oil,other,ingredient,1 tbsp,1 tablespoon (13.6 g),1 tsp=1 teaspoon (4.5 g),,
+173468,Salt,namak|table salt,other,ingredient,1 tsp,1 teaspoon (6 g),,,
+172231,Turmeric powder,haldi|turmeric,other,ingredient,1 tsp,1 teaspoon (3 g),,,raw_ingredient
+170923,Cumin seeds,jeera|cumin,other,ingredient,"1 tsp, whole",1 teaspoon (2.1 g),,,raw_ingredient
+171319,Chilli powder,lal mirch powder|red chilli powder,other,ingredient,1 tsp,1 teaspoon (2.7 g),,USDA chili powder (a blend),raw_ingredient
+170922,Coriander powder,dhaniya powder|coriander seeds,other,ingredient,1 tsp,1 teaspoon (1.8 g),,USDA coriander seed,raw_ingredient
+170929,Mustard seeds,rai|sarson|mustard seed,other,ingredient,1 tsp,1 teaspoon (2 g),,USDA ground mustard seed,raw_ingredient
+167747,Lemon juice,nimbu ras|nimbu juice,other,ingredient,1 wedge,juice of 1 wedge (5.9 g),1 lemon yields=juice of 1 lemon (48 g),,
+171077,Chicken breast (raw skinless),raw chicken breast|boneless chicken breast,other,ingredient,4 oz,113 g,,meat only,raw_ingredient
+173627,Chicken thigh (raw skinless),raw chicken thigh|boneless chicken thigh,other,ingredient,1 thigh without skin,1 thigh (149 g),,meat only,raw_ingredient
+169655,Sugar,cheeni|shakkar|white sugar,other,ingredient,1 tsp,1 teaspoon (4.2 g),,,
+173410,Butter (salted),makhan|salted butter,other,ingredient,1 tbsp,1 tablespoon (14.2 g),,,
+171287,Egg (raw whole),raw egg|anda raw,other,ingredient,1 large,1 large egg (50 g),,,raw_ingredient

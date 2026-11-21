@@ -4,8 +4,9 @@
   automatic function calling is disabled: the app's agent loop decides what runs.
 * Within a turn, the model's own reply object is replayed verbatim
   (`provider_state`), which preserves Gemini's thought signatures.
-* Fallback: if a model is overloaded (5xx) or slow, the next model is tried,
-  unless the request is pinned to one model (a tool turn already in progress).
+* Fallback: if a model is overloaded (5xx), slow, or over its request quota
+  (429; Gemini quotas are per model), the next model is tried, unless the
+  request is pinned to one model (a tool turn already in progress).
 * Each attempt is bounded by our own timeout, independent of the SDK's HTTP stack.
 """
 
@@ -133,7 +134,7 @@ class GeminiLLM:
         for model in models:
             try:
                 return await self._generate_with(model, request)
-            except (LLMTimeout, LLMUnavailable) as exc:
+            except (LLMTimeout, LLMUnavailable, LLMRateLimited) as exc:
                 last = exc
                 if model != models[-1]:
                     logger.warning("LLM model %s failed (%s); trying fallback", model, type(exc).__name__)

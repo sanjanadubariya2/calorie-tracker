@@ -288,3 +288,15 @@ def test_history_shows_the_current_proposal_status(h: H) -> None:
 def test_proposal_requires_auth(h: H) -> None:
     pid = h.propose_eggs()["action"]["proposal"]["id"]
     assert h.c.post(f"/v1/assistant/proposals/{pid}/confirm", json={}).status_code == 401
+
+
+def test_unreliable_catalogue_values_are_flagged_on_the_proposal(h: H) -> None:
+    samosa = {**food("Potato samosa", "snack", 577, 1.7, 141, carbs100=9.2, fat100=59.2, label="1 samosa"),
+              "quality_flags": ["cooking_oil_uncertain"]}
+    h.db.foods.append(samosa)
+    h.db.search_by_query["samosa"] = [{**search_row(samosa, 0.97, "exact"), "quality_flags": ["cooking_oil_uncertain"]}]
+    h.llm.then(reply(call("prepare_food_log", items=[{"food_name": "samosa", "quantity": 1, "unit": "piece"}],
+                          meal_type="evening_snack")),
+               reply(respond("proposed_action", "1 samosa. Note the database value may be high. Tap Confirm to log it.")))
+    item = h.send("log a samosa")["assistant_message"]["response"]["action"]["proposal"]["items"][0]
+    assert "cooking_oil_uncertain" in item["warnings"]

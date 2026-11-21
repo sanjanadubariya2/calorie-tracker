@@ -40,6 +40,14 @@ export default function AssistantScreen() {
     if (a.available && !state.conversationsLoaded) void a.loadConversations();
   }, [a, state.conversationsLoaded]);
 
+  // A recommendation sent from the Meals tab lands in the composer; the user sends it.
+  useEffect(() => {
+    if (a.pendingDraft) {
+      setText(a.pendingDraft);
+      a.takeDraft();
+    }
+  }, [a, a.pendingDraft]);
+
   if (!a.available) {
     return (
       <View style={[styles.wrap, styles.center]} testID="assistant-unavailable">

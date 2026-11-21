@@ -195,7 +195,7 @@ it("a proposal shows food, portion, nutrition and source", async () => {
   expect(exists(`proposal-${proposal().id}`)).toBe(true);
   expect(text()).toContain("Boiled egg");
   expect(text()).toContain("155 kcal");
-  expect(text()).toContain("Source: INDB ASC056");
+  expect(text()).toContain("Source: Indian Nutrient Databank · ASC056");
   expect(byId("proposal-quantity-0").props.value).toBe("2");
 });
 
@@ -277,4 +277,19 @@ it("without a backend the tab explains it's unavailable", async () => {
   await render();
   expect(exists("assistant-unavailable")).toBe(true);
   expect(m.listConversations).not.toHaveBeenCalled();
+});
+
+it("a recommendation sent from the Meals tab is placed in the composer, not sent", async () => {
+  const { useAssistant } = jest.requireActual("@/lib/assistant-context") as typeof import("@/lib/assistant-context");
+  function Sender() {
+    const a = useAssistant();
+    React.useEffect(() => { a.compose("Tell me about this lunch recommendation: Dal"); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+    return null;
+  }
+  await act(async () => {
+    r = TestRenderer.create(<AssistantProvider><Sender /><AssistantScreen /></AssistantProvider>);
+  });
+  await flush();
+  expect(byId("composer-input").props.value).toBe("Tell me about this lunch recommendation: Dal");
+  expect(m.sendMessage).not.toHaveBeenCalled();
 });

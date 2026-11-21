@@ -12,6 +12,11 @@ Three separate paths:
 
 A proposal is single-use: pending -> confirming -> confirmed. A failed save
 puts it back to pending so the user can retry; a second confirmation gets 409.
+
+Proposals can also come from a meal recommendation (Phase 3, migration 018):
+no conversation, a recommendation_item_id instead. They are confirmed through
+exactly the same path. Recipe items (no catalogue food) are priced by
+recipe_portion for the chosen servings, again at confirmation.
 """
 
 from __future__ import annotations
@@ -45,12 +50,12 @@ class ItemNutrition(BaseModel):
 
 
 class ProposedFood(BaseModel):
-    food_id: uuid.UUID                     # catalogue food
+    food_id: uuid.UUID | None              # catalogue food (None for a recipe)
     food_name: str                         # the catalogue's name
     requested_name: str                    # what the user/model asked for
     quantity: float | None
     unit: str | None
-    grams: float
+    grams: float | None                    # None for a recipe (cooked weight unknown)
     quantity_source: str                   # user_stated | model_estimate | manual
     portion_source: str                    # how grams were derived
     portion_is_estimate: bool
@@ -60,6 +65,8 @@ class ProposedFood(BaseModel):
     nutrition_source: str                  # e.g. indb
     source_ref: str | None
     warnings: list[str]
+    recipe_id: uuid.UUID | None = None     # a published recipe, priced by servings
+    recipe_servings: float | None = None
 
 
 class ProposalTotals(BaseModel):
@@ -168,18 +175,37 @@ def totals(items: list[ProposedFood]) -> ProposalTotals:
     )
 
 
+async def price_recipe_item(db: SupabaseRest, user: AuthenticatedUser, item: ProposedFood,
+                            servings: float) -> ProposedFood | None:
+    """A recipe proposal line re-priced by the database for `servings`."""
+    from app.db.supabase import DatabaseError
+    if item.recipe_id is None or not 0 < servings <= 20:
+        return None
+    try:
+        value = await db.rpc(user, "recipe_portion", {"p_recipe_id": str(item.recipe_id), "p_portions": servings})
+    except DatabaseError:
+        return None
+    if not isinstance(value, dict) or value.get("calories") is None:
+        return None
+    return item.model_copy(update={
+        "quantity": servings, "recipe_servings": servings,
+        "nutrition": ItemNutrition(calories=_r1(value["calories"]), protein_g=_r1(value["protein_g"]),
+                                   carbs_g=_r1(value["carbs_g"]), fat_g=_r1(value["fat_g"])),
+    })
+
+
 # ============================================================================ storage
 
 class ProposalStore(Protocol):
-    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID, payload: dict[str, Any],
-                     ttl_minutes: int) -> dict[str, Any]: ...
+    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID | None, payload: dict[str, Any],
+                     ttl_minutes: int, recommendation_item_id: uuid.UUID | None = None) -> dict[str, Any]: ...
     async def get(self, user: AuthenticatedUser, proposal_id: uuid.UUID) -> dict[str, Any] | None: ...
     async def statuses(self, user: AuthenticatedUser, ids: list[uuid.UUID]) -> dict[str, dict[str, Any]]: ...
     async def transition(self, user: AuthenticatedUser, proposal_id: uuid.UUID, from_status: str, to_status: str,
                          food_log_ids: list[str] | None = None, require_unexpired: bool = False) -> dict[str, Any] | None: ...
 
 
-_COLUMNS = "id,status,payload,expires_at,food_log_ids,created_at"
+_COLUMNS = "id,status,payload,expires_at,food_log_ids,created_at,origin,recommendation_item_id"
 
 
 class SupabaseProposalStore:
@@ -196,15 +222,19 @@ class SupabaseProposalStore:
             raise StoreNotConfigured("ASSISTANT_DATABASE_URL is not set")
         return self._writer
 
-    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID, payload: dict[str, Any],
-                     ttl_minutes: int) -> dict[str, Any]:
+    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID | None, payload: dict[str, Any],
+                     ttl_minutes: int, recommendation_item_id: uuid.UUID | None = None) -> dict[str, Any]:
         from psycopg.types.json import Jsonb
 
         def run(conn: Any) -> dict[str, Any]:
             return conn.execute(
-                f"insert into public.assistant_proposals (user_id, conversation_id, payload, expires_at) "
-                f"values (%s, %s, %s, now() + make_interval(mins => %s)) returning {_COLUMNS}",
-                (user.user_id, str(conversation_id), Jsonb(payload), ttl_minutes)).fetchone()
+                f"insert into public.assistant_proposals (user_id, origin, conversation_id, recommendation_item_id, "
+                f"payload, expires_at) values (%s, %s, %s, %s, %s, now() + make_interval(mins => %s)) "
+                f"returning {_COLUMNS}",
+                (user.user_id, "assistant" if conversation_id else "recommendation",
+                 str(conversation_id) if conversation_id else None,
+                 str(recommendation_item_id) if recommendation_item_id else None, Jsonb(payload),
+                 ttl_minutes)).fetchone()
         return await self._w().run(run)
 
     async def get(self, user: AuthenticatedUser, proposal_id: uuid.UUID) -> dict[str, Any] | None:
@@ -256,12 +286,14 @@ class ProposalService:
         self._db = db
         self._ttl = ttl_minutes
 
-    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID, meal_type: str,
-                     logged_date: dt.date, items: list[ProposedFood]) -> FoodLogProposal:
+    async def create(self, user: AuthenticatedUser, conversation_id: uuid.UUID | None, meal_type: str,
+                     logged_date: dt.date, items: list[ProposedFood],
+                     recommendation_item_id: uuid.UUID | None = None) -> FoodLogProposal:
         payload = {"meal_type": meal_type, "logged_date": logged_date.isoformat(),
                    "items": [i.model_dump(mode="json") for i in items],
                    "totals": totals(items).model_dump(mode="json")}
-        return to_out(await self.store.create(user, conversation_id, payload, self._ttl))
+        return to_out(await self.store.create(user, conversation_id, payload, self._ttl,
+                                              recommendation_item_id=recommendation_item_id))
 
     async def get(self, user: AuthenticatedUser, proposal_id: uuid.UUID) -> FoodLogProposal:
         row = await self.store.get(user, proposal_id)
@@ -294,16 +326,33 @@ class ProposalService:
         if claimed is None:                                            # lost a race, or expired just now
             latest = await self.store.get(user, proposal_id)
             raise ProposalStateError(effective_status(latest) if latest else "expired")
+        from_recommendation = (claimed.get("origin") or row.get("origin")) == "recommendation"
+        item_id = claimed.get("recommendation_item_id") or row.get("recommendation_item_id")
         try:
             items, meal_type, logged_date = await self._revalidate(user, claimed["payload"], request)
-            saved = await self._insert_logs(user, items, meal_type, logged_date)
+            saved = await self._insert_logs(user, items, meal_type, logged_date,
+                                            source="catalogue" if from_recommendation else "ai_assisted")
         except Exception:
             await self.store.transition(user, proposal_id, "confirming", "pending")   # nothing saved: allow retry
             raise
         done = await self.store.transition(user, proposal_id, "confirming", "confirmed",
                                            food_log_ids=[str(s.id) for s in saved])
         out = to_out(done or {**claimed, "status": "confirmed", "food_log_ids": [str(s.id) for s in saved]})
+        if from_recommendation and item_id:
+            await self._record_logged(user, str(item_id))
         return ConfirmResult(proposal=out, food_logs=saved)
+
+    async def _record_logged(self, user: AuthenticatedUser, item_id: str) -> None:
+        """Interaction history: the recommendation was logged. Never undoes the log."""
+        from app.db.supabase import DatabaseError, DatabaseUnavailable
+        try:
+            items = await self._db.select(user, "recommendation_items",
+                                          {"select": "set_id,rank", "id": f"eq.{item_id}", "limit": "1"})
+            if items:
+                await self._db.insert(user, "recommendation_events", {
+                    "set_id": items[0]["set_id"], "rank": items[0]["rank"], "event": "logged"})
+        except (DatabaseError, DatabaseUnavailable):
+            pass
 
     async def _revalidate(self, user: AuthenticatedUser, payload: dict[str, Any], request: ConfirmRequest
                           ) -> tuple[list[ProposedFood], str, str]:
@@ -312,9 +361,14 @@ class ProposalService:
         if any(i >= len(stored) for i in edits):
             raise ProposalInvalid(["An edit refers to an item that isn't in the proposal."])
         inputs: list[tuple[ProposedFood, ProposalItemInput, str]] = []
+        recipes: list[tuple[int, ProposedFood, float]] = []
         for idx, item in enumerate(stored):
             edit = edits.get(idx)
             if edit and edit.remove:
+                continue
+            if item.recipe_id is not None:
+                servings = edit.quantity if edit and edit.quantity is not None else item.recipe_servings
+                recipes.append((idx, item, float(servings or 0)))
                 continue
             quantity, unit, source = item.quantity, item.unit, item.quantity_source
             if edit and (edit.quantity is not None or edit.unit is not None):
@@ -327,11 +381,17 @@ class ProposalService:
                 food_name=item.food_name, quantity=quantity, unit=unit, selected_food_id=item.food_id,
                 quantity_source="manual" if source == "manual" else ("user_stated" if source == "user_stated" else "model_estimate"),
             ), source))
-        if not inputs:
+        if not inputs and not recipes:
             raise ProposalInvalid(["Nothing left to log: every item was removed."])
         grounded = await asyncio.gather(*(grounding.ground_item(self._db, user, inp) for _, inp, _ in inputs))
         fresh: list[ProposedFood] = []
         problems: list[str] = []
+        for _, item, servings in recipes:
+            priced = await price_recipe_item(self._db, user, item, servings)
+            if priced is None:
+                problems.append(f"{item.food_name}: can't be logged as proposed (recipe no longer available).")
+            else:
+                fresh.append(priced)
         for (item, _, source), g in zip(inputs, grounded):
             p = to_proposed(g, item.requested_name, source)
             if p is None or g.match.decision != "user_selected":
@@ -343,14 +403,14 @@ class ProposalService:
         return fresh, request.meal_type or payload["meal_type"], payload["logged_date"]
 
     async def _insert_logs(self, user: AuthenticatedUser, items: list[ProposedFood], meal_type: str,
-                           logged_date: str) -> list[SavedLog]:
+                           logged_date: str, source: str = "ai_assisted") -> list[SavedLog]:
         from app.db.supabase import DatabaseError, DatabaseUnavailable
 
         rows = [{
             "user_id": user.user_id, "logged_date": logged_date, "meal_type": meal_type, "food_name": i.food_name,
             "calories": i.nutrition.calories, "carbs_g": i.nutrition.carbs_g, "fat_g": i.nutrition.fat_g,
             "protein_g": i.nutrition.protein_g, "serving_g": i.grams, "is_quick_add": False,
-            "source": "ai_assisted", "food_id": str(i.food_id),
+            "source": source, "food_id": str(i.food_id) if i.food_id else None,
             # The database replaces this with the catalogue's own snapshot for food_id (trigger).
             "nutrients_per_100g": {k: v for k, v in i.per_100g.items()
                                    if k in ("kcal", "carbs_g", "fat_g", "protein_g", "fiber_g", "sugars_g",

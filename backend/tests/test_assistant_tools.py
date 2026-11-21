@@ -14,7 +14,6 @@ import jwt
 import pytest
 
 from app.assistant.tools.base import ToolContext, ToolRegistry
-from app.assistant.tools.recommend import excluded_by
 from app.assistant.tools.registry import default_registry
 from app.assistant.preferences import PreferencesOut
 from app.core.config import Settings
@@ -246,60 +245,60 @@ def test_recommendations_are_deterministic_and_priced_by_the_database(run: Any, 
     first = run("recommend_meals", {"meal_type": "lunch", "count": 3}).content["result"]
     second = run("recommend_meals", {"meal_type": "lunch", "count": 3}).content["result"]
     assert first == second
-    assert first["meal_target"]["calories_kcal"] == 700.0          # 35% of 2000, under the 800 remaining
-    names = [r["name"] for r in first["recommendations"]]
-    assert len(names) == 3
-    paneer = next(r for r in first["recommendations"] if r["name"] == "Paneer tikka")
-    assert paneer["nutrition"] == {"calories_kcal": 375.0, "protein_g": 27.0, "carbs_g": 30.0, "fat_g": 7.5}
-    priced = {b["p_food_id"] for _, what, b in catalogue.requests if what == "rpc:food_portion"}
-    assert {r["food_id"] for r in first["recommendations"]} <= priced
-    moong = next((r for r in first["recommendations"] if r["name"] == "Moong dal"), None)
-    if moong:
-        assert "You've logged this before." in moong["reasons"]
+    assert first["engine_version"] == "rec-v2" and first["data_source"] == "recommendation_engine"
+    assert first["meal_target"]["calories_kcal"] == 700          # 35% of 2000, under the 800 remaining
+    assert 1 <= len(first["recommendations"]) <= 3
+    # Every number shown was priced by the database for the chosen portion.
+    priced = {(b["p_food_id"], b["p_grams"]) for _, what, b in catalogue.requests if what == "rpc:food_portion"}
+    for r in first["recommendations"]:
+        [portion] = r["portions"]
+        assert (r["food_id"], portion["grams"]) in priced
+        assert r["fit"] in ("strong", "good", "fair") and r["reasons"]
 
 
-def test_recommendations_respect_preferences(run: Any, catalogue: FakeNutritionDB) -> None:
-    catalogue.user(A).prefs = {"diet": "vegetarian", "allergies": ["peanut"], "dislikes": ["karela"], "cuisines": [],
-                               "meal_preferences": [], "notes": None, "updated_at": None}
+def test_recommendations_are_read_only(run: Any, catalogue: FakeNutritionDB) -> None:
+    run("recommend_meals", {"meal_type": "lunch"})
+    assert not [w for _, what, _ in catalogue.requests for w in [what]
+                if w.startswith(("POST:", "PATCH:", "DELETE:", "PUT:"))]
+
+
+def test_recommendations_apply_hard_exclusions(run: Any, catalogue: FakeNutritionDB) -> None:
+    catalogue.user(A).prefs = {"diet": "vegetarian", "allergies": [], "dislikes": [], "excluded_ingredients": ["karela"],
+                               "cuisines": [], "meal_preferences": [], "notes": None, "updated_at": None}
     r = run("recommend_meals", {"meal_type": "lunch", "count": 5}).content["result"]
     names = {x["name"] for x in r["recommendations"]}
-    assert not names & {"Chicken curry", "Egg bhurji", "Peanut chikki", "Karela sabzi"}
-    assert r["filters_applied"] == ["diet: vegetarian", "allergies: peanut", "dislikes: karela"]
-    assert any("check ingredients" in c.lower() for c in r["cautions"])
+    assert not names & {"Chicken curry", "Egg bhurji", "Karela sabzi"}
+    reasons = {e["reason"] for e in r["excluded"]}
+    assert {"diet_conflict", "excluded_ingredient"} <= reasons
+
+
+def test_unverified_allergens_mean_no_recommendations(run: Any, catalogue: FakeNutritionDB) -> None:
+    catalogue.user(A).prefs = {"diet": None, "allergies": ["peanut"], "dislikes": [], "cuisines": [],
+                               "meal_preferences": [], "notes": None, "updated_at": None}
+    r = run("recommend_meals", {"meal_type": "lunch"}).content["result"]
+    assert (r["status"], r["recommendations"]) == ("insufficient_data", [])
+    assert any("reviewed allergen information" in n for n in r["notes"])
 
 
 def test_recommendations_when_target_is_used_up(run: Any, catalogue: FakeNutritionDB) -> None:
     catalogue.user(A).status = status_row(consumed=1950)
     r = run("recommend_meals", {"meal_type": "dinner"}).content["result"]
     assert r["meal_target"]["calories_kcal"] == 150
-    assert all(x["nutrition"]["calories_kcal"] <= 240 for x in r["recommendations"])
+    assert all(x["nutrition"]["calories_kcal"] <= 195 for x in r["recommendations"])
     assert any("light options" in n for n in r["notes"])
 
 
 def test_recommendations_without_targets_say_so(run: Any, catalogue: FakeNutritionDB) -> None:
     catalogue.user(A).status = status_row(target=None)
     r = run("recommend_meals", {"meal_type": "breakfast"}).content["result"]
-    assert any("2000 kcal day was assumed" in n for n in r["notes"])
+    assert r["meal_target"]["basis"] == "assumed"
+    assert any("assumes a 2,000 kcal day" in n for n in r["notes"])
 
 
-@pytest.mark.parametrize("args", [{}, {"meal_type": "brunch"}, {"meal_type": "lunch", "count": 6}])
+@pytest.mark.parametrize("args", [{}, {"meal_type": "brunch"}, {"meal_type": "lunch", "count": 6},
+                                  {"meal_type": "lunch", "user_id": "x"}, {"meal_type": "lunch", "max_kcal": 10}])
 def test_recommend_invalid(run: Any, args: dict[str, Any]) -> None:
     assert run("recommend_meals", args).status == "invalid_arguments"
-
-
-@pytest.mark.parametrize("diet,name,category,excluded", [
-    ("vegetarian", "egg curry", "egg_dish", True), ("eggetarian", "egg curry", "egg_dish", False),
-    ("eggetarian", "fish fry", None, True), ("pescatarian", "fish fry", None, False),
-    ("pescatarian", "mutton biryani", "non_veg", True), ("vegan", "paneer tikka", "paneer_dish", True),
-    ("vegan", "chana masala", "sabzi", False), ("jain", "aloo paratha", "bread", True),
-    ("vegetarian", "veggie pulao", "rice_dish", False),
-])
-def test_diet_filters(diet: str, name: str, category: str | None, excluded: bool) -> None:
-    from app.assistant.tools.recommend import PoolFood
-
-    f = PoolFood("1", name, name, category, "indb", None, "1", 100, 100, 5, 10, 3)
-    prefs = PreferencesOut(diet=diet, allergies=[], dislikes=[], cuisines=[], meal_preferences=[], notes=None)
-    assert (excluded_by(f, prefs) is not None) is excluded
 
 
 # ---------------------------------------------------------------------------- registry protections
@@ -365,3 +364,19 @@ def test_tool_reference_is_up_to_date() -> None:
 
     doc = Path(__file__).resolve().parents[1] / "docs" / "assistant-tools.md"
     assert doc.read_text(encoding="utf-8") == tools_markdown(), "run: python -m app.cli assistant-tools-doc"
+
+
+def test_recommendations_skip_foods_with_unreliable_values(run: Any, catalogue: FakeNutritionDB) -> None:
+    catalogue.foods.append({**food("Medu vada", "dal", 745, 4, 79), "quality_flags": ["cooking_oil_uncertain"]})
+    catalogue.foods.append({**food("Odd soup", "dal", 100, 30, 150), "quality_flags": ["energy_mismatch"]})
+    r = run("recommend_meals", {"meal_type": "lunch", "count": 5}).content["result"]
+    names = {x["name"] for x in r["recommendations"]}
+    assert "Medu vada" not in names and "Odd soup" not in names
+
+
+def test_recent_logs_include_per_day_totals(run: Any) -> None:
+    r = run("get_recent_food_logs", {}).content["result"]
+    assert r["totals_by_date"] == [
+        {"date": "2026-11-20", "calories_kcal": 250.0, "protein_g": 12.0, "carbs_g": 30.0, "fat_g": 8.0, "entries": 1},
+        {"date": "2026-11-19", "calories_kcal": 240.0, "protein_g": 8.0, "carbs_g": 40.0, "fat_g": 6.0, "entries": 1},
+    ]

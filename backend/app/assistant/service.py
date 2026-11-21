@@ -63,7 +63,7 @@ def _utc_today() -> dt.date:
 
 class AssistantService:
     def __init__(self, store: ConversationStore, llm: LLMService, registry: ToolRegistry, settings: Settings,
-                 db: SupabaseRest, proposals: ProposalService) -> None:
+                 db: SupabaseRest, proposals: ProposalService, recommendations: Any = None) -> None:
         self.store = store
         self.proposals = proposals
         self.llm = llm
@@ -72,7 +72,11 @@ class AssistantService:
         self._db = db
         self._loop = AgentLoop(llm, registry, settings)
         self._limiter = _SlidingWindow(settings.assistant_turns_per_user_per_minute, 60)
-        self._services: dict[str, Any] = {"proposal_service": proposals}   # + shared caches (catalogue pool)
+        # Shared with tools: the proposal service and the app's recommendation repository
+        # (so the assistant and the app use the same candidate cache and logic).
+        self._services: dict[str, Any] = {"proposal_service": proposals}
+        if recommendations is not None:
+            self._services["recommendations"] = recommendations
 
     # ------------------------------------------------------------------ turn
 
