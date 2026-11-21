@@ -19,6 +19,21 @@ export const API_BASE_URL: string | null = (RAW_API_BASE_URL ?? "").trim().repla
 
 export const BACKEND_ENABLED = API_BASE_URL !== null && !MOCK_MODE;
 
+/**
+ * Why backend features (meals, assistant, photo recognition) are off, as a
+ * sentence for the screen; null when they're on. Demo mode is the usual cause
+ * in development: it runs on in-memory data with no Supabase or backend.
+ */
+export function backendOffReason(): string | null {
+  if (BACKEND_ENABLED) return null;
+  if (MOCK_MODE) {
+    return "This needs the server, which is off in demo mode." +
+      (__DEV__ ? " Set EXPO_PUBLIC_MOCK_MODE=false in .env and restart Expo." : "");
+  }
+  return "This needs the server, which isn't configured for this build." +
+    (__DEV__ ? " Set EXPO_PUBLIC_API_BASE_URL in .env and restart Expo." : "");
+}
+
 export class BackendError extends Error {
   constructor(
     readonly status: number,

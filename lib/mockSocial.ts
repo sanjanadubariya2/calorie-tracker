@@ -4,7 +4,7 @@ import type { FriendSummary, PendingRequest, PublicProfile } from "./social";
 // Mock-mode counterpart to lib/social.ts, so the social tab is explorable with
 // no Supabase project. Seeded with a few characters to compare against.
 
-const STORAGE_KEY = "calorie-tracker-mock-social-v1";
+const STORAGE_KEY = "calorie-tracker-mock-social-v2";   // v2: no friend calorie data
 
 interface MockSocialDB {
   username: string | null;
@@ -22,28 +22,19 @@ function seed(): MockSocialDB {
       user_id: "mock-friend-1",
       username: "meera_runs",
       avatar_url: null,
-      today_kcal: 1420,
-      avg7_kcal: 1580,
       current_streak: 6,
-      daily_target_kcal: 1700,
     },
     {
       user_id: "mock-friend-2",
       username: "arjun_lifts",
       avatar_url: null,
-      today_kcal: 2280,
-      avg7_kcal: 2410,
       current_streak: 3,
-      daily_target_kcal: 2400,
     },
     {
       user_id: "mock-friend-3",
       username: "priya",
       avatar_url: null,
-      today_kcal: 980,
-      avg7_kcal: 1490,
-      current_streak: 11,
-      daily_target_kcal: 1550,
+      current_streak: null,          // doesn't share her streak
     },
   ];
 
@@ -152,10 +143,7 @@ export async function mockAcceptFriendRequest(friendshipId: string): Promise<voi
     user_id: req.user_id,
     username: req.username,
     avatar_url: req.avatar_url,
-    today_kcal: 1150,
-    avg7_kcal: 1320,
     current_streak: 2,
-    daily_target_kcal: 1800,
   });
   await save(db);
 }

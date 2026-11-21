@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(46);
+select plan(48);
 
 -- Production-equivalent grants on the 001 tables that 004 does not manage
 -- (see 003_social_security.test.sql for why). user_streaks is deliberately
@@ -49,13 +49,23 @@ select set_config('t.claims_c', '{"sub":"cccccccc-0000-0000-0000-00000000000c","
 create schema test_helpers;  -- rolled back with the transaction
 grant usage on schema test_helpers to authenticated;
 
--- Inserts a food log for the current JWT user, `days_ago` relative to that
--- user's today (passed in). Runs as the caller, so RLS and the trigger apply.
+-- Inserts a food log for the current JWT user as if it had been entered ON
+-- p_day (noon in the user's zone): since 027 only on-time entries build a
+-- streak. SECURITY DEFINER so the test can set created_at (clients can't).
 create function test_helpers.log_food(p_day date, p_name text default 'Food')
+returns void language sql security definer set search_path = '' as $$
+  insert into public.food_logs (user_id, logged_date, meal_type, food_name, calories, created_at)
+  select auth.uid(), p_day, 'lunch', p_name, 100,
+         (p_day + time '12:00') at time zone coalesce(
+           (select p.timezone from public.profiles p where p.user_id = auth.uid()), 'utc');
+$$;
+-- A late entry: made now, for an earlier day (as the app would do it).
+create function test_helpers.log_late(p_day date, p_name text default 'Late')
 returns void language sql as $$
   insert into public.food_logs (user_id, logged_date, meal_type, food_name, calories)
   values (auth.uid(), p_day, 'lunch', p_name, 100);
 $$;
+grant execute on function test_helpers.log_late(date, text) to authenticated;
 grant execute on function test_helpers.log_food(date, text) to authenticated;
 
 -- Raw stored row, read as postgres.
@@ -140,6 +150,19 @@ select results_eq(
   '6. Filling the D-3 gap joins the runs: D-4..D -> 5');
 
 -- ==================================================================
+-- 6b. Late entries (027): kept in history, never counted
+-- ==================================================================
+select test_helpers.log_late(current_setting('t.a')::date - 30, 'Late');
+select test_helpers.log_late(current_setting('t.a')::date - 31, 'Late');
+select test_helpers.log_late(current_setting('t.a')::date - 32, 'Late');
+select results_eq(
+  $$ select current_streak, longest_streak from public.get_my_streak() $$,
+  $$ values (5, 5) $$,
+  '6b. Three days entered weeks later build no streak and no badge');
+select is((select count(*)::int from public.food_logs where food_name = 'Late'), 3,
+  '6b. ...but they stay in the food history');
+
+-- ==================================================================
 -- 7. Deleting one of several logs on a date keeps the day active
 -- ==================================================================
 delete from public.food_logs where food_name = 'Chai';
@@ -196,12 +219,12 @@ update public.food_logs set logged_date = current_setting('t.a')::date - 7
 where food_name = 'Backdated';
 select results_eq(
   $$ select current_streak, longest_streak from public.get_my_streak() $$,
-  $$ values (8, 8) $$,
-  'UPDATE: moving the D-10 log to D-7 extends the run to 8');
+  $$ values (7, 7) $$,
+  'UPDATE: moving the D-10 log to D-7 makes it a late entry, so the run stays 7 (027)');
 
 update public.food_logs set food_name = 'Renamed'
 where food_name = 'Extra' and logged_date = current_setting('t.a')::date;
-select is((select current_streak from public.get_my_streak()), 8,
+select is((select current_streak from public.get_my_streak()), 7,
   'UPDATE: an edit that keeps the date leaves the streak unchanged');
 
 -- ==================================================================
@@ -241,7 +264,7 @@ reset role;
 select results_eq(
   $$ select current_streak, longest_streak, badges_earned
      from test_helpers.stored('aaaaaaaa-0000-0000-0000-00000000000a') $$,
-  $$ values (8, 8, 2) $$,
+  $$ values (7, 7, 2) $$,
   '11. Stored values are untouched by the refused writes');
 
 -- ==================================================================
@@ -264,10 +287,12 @@ select is((select current_streak from test_helpers.stored('bbbbbbbb-0000-0000-00
 -- A friend sees the lapsed streak as 0 too (decay in B's zone).
 insert into public.friendships (requester_id, addressee_id, status)
 values ('cccccccc-0000-0000-0000-00000000000c', 'bbbbbbbb-0000-0000-0000-00000000000b', 'accepted');
+-- Streaks reach friends only when shared (025).
+insert into public.social_settings (user_id, share_activity) values ('bbbbbbbb-0000-0000-0000-00000000000b', true);
 set local role authenticated;
 select set_config('request.jwt.claims', current_setting('t.claims_c'), true);
 select is(
-  (select current_streak from public.get_friend_summaries(current_setting('t.b')::date)),
+  (select current_streak from public.get_friend_list()),
   0,
   '4. Friend summary shows the lapsed streak as 0');
 
@@ -307,11 +332,13 @@ insert into auth.users (id, email) values ('dddddddd-0000-0000-0000-00000000000d
 insert into public.profiles (user_id, age, height_cm, weight_kg, gender, goal, username, timezone)
 values ('dddddddd-0000-0000-0000-00000000000d', 30, 170, 70, 'female', 'lose', 'streak_d', 'UTC');
 
+-- One statement, each row entered on its own day (on time, 027).
+insert into public.food_logs (user_id, logged_date, meal_type, food_name, calories, created_at)
+select 'dddddddd-0000-0000-0000-00000000000d', current_setting('t.b')::date - (g % 4), 'lunch', 'bulk ' || g, 50,
+       (current_setting('t.b')::date - (g % 4) + time '12:00') at time zone 'utc'
+from generate_series(1, 20) g;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"dddddddd-0000-0000-0000-00000000000d","role":"authenticated"}', true);
-insert into public.food_logs (user_id, logged_date, meal_type, food_name, calories)
-select auth.uid(), current_setting('t.b')::date - (g % 4), 'lunch', 'bulk ' || g, 50
-from generate_series(1, 20) g;
 
 reset role;
 select is((select count(*)::int from public.user_streaks
@@ -359,7 +386,7 @@ select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
      and p.proname in ('recalculate_user_streak', 'food_logs_recalculate_streaks', 'user_today_bounds',
-                       'get_my_streak', 'get_friend_summaries')
+                       'get_my_streak', 'get_friend_list')
      and p.prosecdef
      and p.proconfig @> array['search_path=""']),
   5,

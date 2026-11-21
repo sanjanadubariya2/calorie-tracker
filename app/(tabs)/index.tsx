@@ -14,6 +14,7 @@ import { NutritionCard } from "@/components/NutritionCard";
 import { MealSlotList } from "@/components/MealSlotList";
 import { WeeklyChart, type DayTotal } from "@/components/WeeklyChart";
 import { BadgeRow } from "@/components/BadgeRow";
+import { AchievementCelebration } from "@/components/achievements/AchievementCelebration";
 import { colors, spacing, typography, MEAL_SLOTS, type MealType } from "@/constants/theme";
 import type { FoodLog } from "@/lib/types";
 
@@ -160,11 +161,12 @@ export default function DashboardScreen() {
             onPress={() => router.push("/reports")}
           />
 
-          <BadgeRow currentStreak={streak} />
+          <BadgeRow currentStreak={streak} onPress={() => router.push("/modals/achievements")} />
         </>
       )}
 
       <View style={{ height: spacing.xl }} />
+      <AchievementCelebration />
     </ScrollView>
   );
 }

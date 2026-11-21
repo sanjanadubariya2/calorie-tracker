@@ -27,6 +27,7 @@ import {
 } from "@/lib/recognitionReview";
 import { PhotoPermissionError, pickMealPhoto, takeMealPhoto, type PickedPhoto } from "@/lib/mealPhotoPicker";
 import { RecognitionItemCard } from "./RecognitionItemCard";
+import { backendOffReason } from "@/lib/backend";
 
 type Phase =
   | { kind: "input" }
@@ -190,7 +191,7 @@ export function RecognitionTab({ initialMeal, loggedDate, addLog, onDone, onManu
   if (!recognitionAvailable()) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.body}>AI recognition isn't available in this version of the app.</Text>
+        <Text style={styles.body}>AI recognition isn't available. {backendOffReason()}</Text>
         <Pressable style={styles.secondaryButton} onPress={onManual} testID="manual-fallback">
           <Text style={styles.secondaryButtonText}>Log manually</Text>
         </Pressable>

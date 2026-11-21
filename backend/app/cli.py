@@ -9,6 +9,12 @@
   python -m app.cli load-staples <SR Legacy CSV dir> [--dry-run]   (CATALOGUE_DATABASE_URL)
   python -m app.cli classify-foods --out data/food_attributes_review.csv [--apply]   (CATALOGUE_DATABASE_URL)
   python -m app.cli purge-assistant-conversations   (needs ASSISTANT_DATABASE_URL)
+  python -m app.cli push-deliver [--receipts] [--reminders]   (needs PUSH_DATABASE_URL)
+      Sends queued push notifications through Expo as the notification_sender
+      role (migration 026). Optional EXPO_ACCESS_TOKEN. Run every minute or so.
+  python -m app.cli push-health   (PUSH_DATABASE_URL; exit 2 when unhealthy, for alerting)
+  python -m app.cli social-cleanup [--dry-run]   (needs SOCIAL_MAINTENANCE_DATABASE_URL)
+      Retention for social data as the social_maintainer role (migration 027). Daily.
       Deletes expired meal photos (object first, then row).
       Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. The service-role key is
       used ONLY by this command, in its own environment; the API server never
@@ -340,6 +346,46 @@ def cmd_recipes(args: argparse.Namespace) -> int:
     return 1 if problems else 0
 
 
+def cmd_push_deliver(args: argparse.Namespace) -> int:
+    from app.services import push
+
+    store = push.PostgresPushStore(_require_env("PUSH_DATABASE_URL"))
+    token = os.environ.get("EXPO_ACCESS_TOKEN", "").strip() or None
+    report = push.DeliveryReport()
+    if args.reminders:
+        report.reminders = store.enqueue_reminders()
+    with httpx.Client(timeout=30) as http:
+        push.deliver(store, http, access_token=token, report=report)
+        if args.receipts:
+            push.check_receipts(store, http, access_token=token, report=report)
+    print(f"reminders queued: {report.reminders}")
+    print(f"sent: {report.sent}  retried: {report.retried}  failed: {report.failed}")
+    print(f"receipts ok: {report.receipts_ok}  receipts failed: {report.receipts_failed}")
+    for code, n in sorted(report.errors.items()):
+        print(f"  {code}: {n}")
+    return 0
+
+
+def cmd_push_health(args: argparse.Namespace) -> int:
+    import json
+
+    from app.services import push
+
+    health = push.PostgresPushStore(_require_env("PUSH_DATABASE_URL")).health()
+    limits = push.HealthLimits(max_pending_minutes=args.max_pending_minutes, max_failed_24h=args.max_failed)
+    problems = push.evaluate_health(health, limits)
+    print(json.dumps({**{k: health.get(k) for k in sorted(health)}, "problems": problems}, default=str))
+    return 2 if problems else 0
+
+
+def cmd_social_cleanup(args: argparse.Namespace) -> int:
+    from app.services import push
+
+    for item, n in push.purge_social_data(_require_env("SOCIAL_MAINTENANCE_DATABASE_URL"), args.dry_run):
+        print(f"{item}: {n}{' (dry run)' if args.dry_run else ''}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -393,6 +439,20 @@ def main(argv: list[str] | None = None) -> int:
         "../Anuvaad_INDB_2024.11.xlsx" if Path("../Anuvaad_INDB_2024.11.xlsx").exists() else None),
         help="INDB workbook, to re-check that every nutrient implies the same serving weight")
     rep_.set_defaults(func=cmd_meal_templates_report)
+
+    pd = sub.add_parser("push-deliver", help="send queued push notifications via Expo")
+    pd.add_argument("--receipts", action="store_true", help="also check delivery receipts")
+    pd.add_argument("--reminders", action="store_true", help="also queue challenge start reminders (daily)")
+    pd.set_defaults(func=cmd_push_deliver)
+
+    ph = sub.add_parser("push-health", help="check the push queue (exit 2 when unhealthy)")
+    ph.add_argument("--max-pending-minutes", type=int, default=15)
+    ph.add_argument("--max-failed", type=int, default=50, help="failed pushes allowed in 24 h")
+    ph.set_defaults(func=cmd_push_health)
+
+    sc = sub.add_parser("social-cleanup", help="retention for social data (expired events, old pushes, ...)")
+    sc.add_argument("--dry-run", action="store_true")
+    sc.set_defaults(func=cmd_social_cleanup)
 
     doc = sub.add_parser("assistant-tools-doc", help="write the assistant tool reference (Markdown)")
     doc.add_argument("--out", default="docs/assistant-tools.md")

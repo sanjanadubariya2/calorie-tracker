@@ -8,6 +8,8 @@ import { ACTIVITY_LEVELS, DEFAULT_ACTIVITY_LEVEL } from "@/lib/calculations";
 import { todayISO } from "@/lib/dates";
 import type { DailyStatus } from "@/lib/nutrition";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { SharingSettingsModal } from "@/components/social/SharingSettingsModal";
+import { NotificationSettingsSheet } from "@/components/social/NotificationSettingsSheet";
 import type { Profile, UserStreak } from "@/lib/types";
 
 const GOAL_LABELS: Record<string, string> = {
@@ -22,6 +24,8 @@ export default function ProfileScreen() {
   const [streak, setStreak] = useState<UserStreak | null>(null);
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -100,6 +104,29 @@ export default function ProfileScreen() {
           )}
 
           <Pressable
+            testID="open-achievements"
+            style={styles.editButton}
+            onPress={() => router.push("/modals/achievements")}
+          >
+            <Text style={styles.editButtonText}>🏅 Achievements & streaks</Text>
+          </Pressable>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Privacy & notifications</Text>
+            <Text style={styles.privacyHint}>
+              Your age, height, weight, calories and meals are only ever visible to you.
+            </Text>
+            <Pressable testID="open-privacy" style={styles.settingRow} onPress={() => setPrivacyOpen(true)}>
+              <Text style={styles.settingText}>Activity sharing & blocked people</Text>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+            <Pressable testID="open-notification-settings" style={styles.settingRow} onPress={() => setNotificationsOpen(true)}>
+              <Text style={styles.settingText}>Notifications</Text>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+          </View>
+
+          <Pressable
             style={styles.editButton}
             onPress={() => router.push("/onboarding/profile-setup")}
           >
@@ -107,6 +134,9 @@ export default function ProfileScreen() {
           </Pressable>
         </>
       )}
+
+      <SharingSettingsModal visible={privacyOpen} onClose={() => setPrivacyOpen(false)} />
+      <NotificationSettingsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
 
       <Pressable style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign out</Text>
@@ -186,6 +216,11 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.textPrimary,
   },
+  privacyHint: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: 17 },
+  settingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 48,
+                borderTopWidth: 1, borderTopColor: colors.divider, marginTop: spacing.sm },
+  settingText: { ...typography.body, fontSize: 15, color: colors.textPrimary },
+  chevron: { ...typography.title, color: colors.textTertiary },
   signOutButton: {
     marginTop: spacing.xl,
     alignItems: "center",

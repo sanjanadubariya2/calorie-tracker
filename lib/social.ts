@@ -7,11 +7,13 @@ export interface PublicProfile {
   avatar_url: string | null;
 }
 
+/**
+ * What a friend can see about another friend (migration 025): who they are,
+ * and their streak only if they chose to share it (otherwise null). Never
+ * calories, nutrition, targets or weight.
+ */
 export interface FriendSummary extends PublicProfile {
-  today_kcal: number;
-  avg7_kcal: number;
-  current_streak: number;
-  daily_target_kcal: number;
+  current_streak: number | null;
 }
 
 /** A pending request, from either side. `user_id` is always the *other* person. */
@@ -173,17 +175,21 @@ export async function removeFriendship(friendUserId: string, userId: string): Pr
   if (error) throw error;
 }
 
-export async function getFriendSummaries(todayISO: string): Promise<FriendSummary[]> {
+/** `_todayISO` is unused since migration 027 (kept so callers don't change). */
+export async function getFriendSummaries(_todayISO?: string): Promise<FriendSummary[]> {
   if (MOCK_MODE) return mock.mockGetFriendSummaries();
 
-  const { data, error } = await supabase.rpc("get_friend_summaries", { p_today: todayISO });
+  // get_friend_list (027). The old get_friend_summaries refuses (P0426) so
+  // pre-Phase-4 builds can't render a friend's calories as zeros.
+  const { data, error } = await supabase.rpc("get_friend_list");
   if (error) throw error;
 
-  // Postgres numerics arrive as strings over PostgREST.
+  // Only these fields are kept, even if an older server sends more.
   return ((data as FriendSummary[]) ?? []).map((f) => ({
-    ...f,
-    today_kcal: Number(f.today_kcal) || 0,
-    avg7_kcal: Number(f.avg7_kcal) || 0,
+    user_id: f.user_id,
+    username: f.username,
+    avatar_url: f.avatar_url,
+    current_streak: f.current_streak === null || f.current_streak === undefined ? null : Number(f.current_streak) || 0,
   }));
 }
 

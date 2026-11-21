@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import { MOCK_MODE, supabase } from "./supabase";
 import { mockUserId } from "./mockStore";
+import { forgetDevice } from "./pushNotifications";
 
 export interface SignUpResult {
   /**
@@ -87,6 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserId(null);
           return;
         }
+        // While still signed in: stop this device receiving the account's pushes.
+        await forgetDevice().catch(() => undefined);
         await supabase.auth.signOut();
       },
     }),

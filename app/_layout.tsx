@@ -46,6 +46,10 @@ export default function RootLayout() {
             name="modals/about-nutrition"
             options={{ presentation: "modal", headerShown: false }}
           />
+          <Stack.Screen
+            name="modals/achievements"
+            options={{ presentation: "modal", headerShown: false }}
+          />
         </Stack>
       </View>
       </AssistantProvider>

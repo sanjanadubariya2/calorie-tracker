@@ -67,6 +67,19 @@ describe("configuration", () => {
     expect(backend.BACKEND_ENABLED).toBe(false);
   });
 
+  it("explains why backend features are off, instead of blaming the app version", () => {
+    expect(load(undefined).backend.backendOffReason()).toMatch(/isn't configured for this build/);
+    expect(load("https://api.example.com").backend.backendOffReason()).toBeNull();
+    let demo: typeof import("../backend") | undefined;
+    jest.isolateModules(() => {
+      jest.doMock("../config", () => ({ RAW_API_BASE_URL: "https://api.example.com" }));
+      jest.doMock("../supabase", () => ({ MOCK_MODE: true, supabase: {} }));
+      demo = require("../backend");
+    });
+    expect(demo?.BACKEND_ENABLED).toBe(false);
+    expect(demo?.backendOffReason()).toMatch(/off in demo mode.*EXPO_PUBLIC_MOCK_MODE=false/);
+  });
+
   it("trims whitespace and trailing slashes", () => {
     expect(load("  https://api.example.com/// ").backend.API_BASE_URL).toBe("https://api.example.com");
   });

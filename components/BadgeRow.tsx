@@ -1,24 +1,27 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
 interface Props {
   currentStreak: number;
   /** Weekly badge track, 7 slots, matching the reference screenshot */
   goalDays?: number;
+  /** Opens the achievements screen. */
+  onPress?: () => void;
 }
 
-export function BadgeRow({ currentStreak, goalDays = 7 }: Props) {
+export function BadgeRow({ currentStreak, goalDays = 7, onPress }: Props) {
   const slots = Array.from({ length: goalDays }, (_, i) => i + 1);
   const message =
     currentStreak === 0
-      ? "Log a meal today to start your streak!"
+      ? "Log a meal today to start a streak. Every day is a fresh start."
       : currentStreak === 1
       ? "Great start!"
       : "Another day down!";
 
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress} disabled={!onPress} testID="badge-row"
+               accessibilityRole={onPress ? "button" : undefined} accessibilityHint="Opens your achievements">
       <Text style={styles.title}>Badge progress</Text>
       <Text style={styles.subtitle}>{message}</Text>
 
@@ -42,11 +45,13 @@ export function BadgeRow({ currentStreak, goalDays = 7 }: Props) {
           <Text style={styles.trophyCount}>{goalDays}</Text>
         </View>
       </View>
-    </View>
+      {onPress ? <Text style={styles.link}>See all achievements ›</Text> : null}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  link: { ...typography.caption, color: colors.progressFill, marginTop: spacing.md },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,

@@ -17,6 +17,7 @@ import { useAssistant } from "@/lib/assistant-context";
 import { DRAFT, activeThread, type ChatItem } from "@/lib/assistantState";
 import { MessageBubble, TypingIndicator } from "@/components/assistant/MessageBubble";
 import { ConversationsSheet } from "@/components/assistant/ConversationsSheet";
+import { backendOffReason } from "@/lib/backend";
 
 const QUICK_ACTIONS = [
   "How many calories have I consumed today?",
@@ -52,7 +53,7 @@ export default function AssistantScreen() {
     return (
       <View style={[styles.wrap, styles.center]} testID="assistant-unavailable">
         <Text style={styles.title}>Assistant</Text>
-        <Text style={styles.muted}>The nutrition assistant isn't available in this version of the app.</Text>
+        <Text style={styles.muted}>The nutrition assistant isn't available. {backendOffReason()}</Text>
       </View>
     );
   }

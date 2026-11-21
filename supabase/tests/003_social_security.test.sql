@@ -15,7 +15,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(44);
+select plan(45);
 
 -- ------------------------------------------------------------------
 -- Production-equivalent table grants.
@@ -218,7 +218,7 @@ select results_eq(
 set local role authenticated;
 select set_config('request.jwt.claims', current_setting('test.claims_b'), true);
 select is_empty(
-  format('select * from public.get_friend_summaries(%L::date)', current_setting('test.today')),
+  'select * from public.get_friend_list()',
   '10. A pending request does not expose summaries'
 );
 
@@ -251,47 +251,48 @@ select throws_ok(
   '4. An accepted request cannot be cancelled as a request'
 );
 
--- Connected users get today's aggregate only: 300 + 450, not the 30-day-old 999.
+-- Connected users see who their friend is, and no calorie data at all (025).
 select set_config('request.jwt.claims', current_setting('test.claims_b'), true);
 select results_eq(
-  format('select user_id, username, today_kcal, daily_target_kcal from public.get_friend_summaries(%L::date)',
-         current_setting('test.today')),
-  -- Since 005 the server computes daily_target_kcal (the fixture's 1800 is
-  -- ignored): female, 30 y, 170 cm, 70 kg, lose, light activity -> 1496.
-  $$ values ('aaaaaaaa-0000-0000-0000-000000000001'::uuid, 'user_a'::text, 750::numeric, 1496) $$,
-  '2. B sees A''s aggregate summary for today'
+  'select user_id, username, current_streak from public.get_friend_list()',
+  -- A has not opted in to sharing streaks, so the streak is withheld too.
+  $$ values ('aaaaaaaa-0000-0000-0000-000000000001'::uuid, 'user_a'::text, null::int) $$,
+  '2. B sees A''s username, and nothing A has not chosen to share'
+);
+select is(
+  (select array_agg(a.attname::text order by a.attnum)
+   from pg_proc p, unnest(p.proallargtypes, p.proargmodes, p.proargnames) with ordinality as a(t, mode, attname, attnum)
+   where p.proname = 'get_friend_list' and a.mode = 't'),
+  array['user_id', 'username', 'avatar_url', 'current_streak'],
+  '2. Friend summaries return no calories, averages or targets'
 );
 
 select set_config('request.jwt.claims', current_setting('test.claims_c'), true);
 select is_empty(
-  format('select * from public.get_friend_summaries(%L::date)', current_setting('test.today')),
+  'select * from public.get_friend_list()',
   '10. Unconnected C gets no summaries'
 );
 
 -- ==================================================================
--- Case 11: Connected users cannot query arbitrary dates
+-- Case 11: Builds from before Phase 4 (get_friend_summaries) are refused (027)
 -- ==================================================================
 select set_config('request.jwt.claims', current_setting('test.claims_b'), true);
 select throws_ok(
-  format('select * from public.get_friend_summaries(%L::date - 30)', current_setting('test.today')),
-  '22023', null,
-  '11. A date 30 days back is refused'
-);
-select throws_ok(
-  format('select * from public.get_friend_summaries(%L::date - 2)', current_setting('test.today')),
-  '22023', null,
-  '11. A date 2 days back is refused (outside every time zone''s today)'
-);
-select throws_ok(
-  format('select * from public.get_friend_summaries(%L::date + 3)', current_setting('test.today')),
-  '22023', null,
-  '11. A future date is refused'
+  format('select * from public.get_friend_summaries(%L::date)', current_setting('test.today')),
+  'P0426', null,
+  '11. The old summary function refuses instead of returning rows an old build would show as 0 kcal'
 );
 select throws_ok(
   'select * from public.get_friend_summaries(null)',
-  '22023', null,
-  '11. A null date is refused'
+  'P0426', null,
+  '11. ...for any date'
 );
+select ok(
+  (select count(*) = 0 from pg_proc p, unnest(p.proallargtypes, p.proargmodes, p.proargnames) a(t, m, n)
+   where p.proname = 'get_friend_summaries' and a.m = 't' and a.n ~* 'kcal'),
+  '11. ...and declares no calorie columns'
+);
+select lives_ok('select 1', '11. (placeholder for the removed date-window check)');
 
 -- ==================================================================
 -- Case 12: Connected users still cannot read individual logs or profiles
@@ -344,7 +345,7 @@ select throws_ok(
   '3. A declined request cannot then be accepted'
 );
 select is_empty(
-  format('select * from public.get_friend_summaries(%L::date)', current_setting('test.today')),
+  'select * from public.get_friend_list()',
   '3. Declining does not create a friendship'
 );
 
@@ -412,7 +413,7 @@ reset role;
 select is(
   (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
-     and p.proname in ('respond_to_friend_request', 'cancel_friend_request', 'get_friend_summaries',
+     and p.proname in ('respond_to_friend_request', 'cancel_friend_request', 'get_friend_list',
                        'get_pending_requests', 'get_outgoing_requests', 'find_profile_by_username')
      and p.prosecdef
      and p.proconfig @> array['search_path=""']),

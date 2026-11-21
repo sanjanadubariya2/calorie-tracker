@@ -9,7 +9,11 @@
 -- cover required components only (the base meal). Same signature as 017.
 --
 -- Rollback (local): re-run section 4 of 017_recommendation_candidates.sql.
+--
+-- Re-runnable: 020 later changes this function's return type, so drop first
+-- (re-running 019 must be followed by 020 again, as in the documented order).
 
+drop function if exists public.recommendation_template_candidates();
 create or replace function public.recommendation_template_candidates()
 returns table (
   template_id uuid, slug text, name text, description text, version int,

@@ -208,10 +208,11 @@ insert into public.friendships (requester_id, addressee_id, status)
 values ('a0000000-0000-0000-0000-00000000000a', 'c0000000-0000-0000-0000-00000000000c', 'accepted');
 set local role authenticated;
 select set_config('request.jwt.claims', current_setting('t.claims_a'), true);
+-- Since 025 friends never see calorie totals: only that the friendship exists.
 select is(
-  (select today_kcal from public.get_friend_summaries((((now() at time zone 'utc') - interval '12 hours')::date))),
-  401::numeric,
-  'Friend summary totals the friend''s local today even when the viewer''s date is behind');
+  (select count(*)::int from public.get_friend_list()),
+  1,
+  'Friend summary still lists the friend when the viewer''s date is behind (no calories since 025)');
 
 -- ==================================================================
 -- 7. get_daily_totals

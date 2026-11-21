@@ -24,6 +24,7 @@ import {
 } from "@/lib/recommendationsView";
 import { RecommendationCard, RecommendationSkeleton } from "@/components/recommendations/RecommendationCard";
 import { RecommendationDetailSheet } from "@/components/recommendations/RecommendationDetail";
+import { backendOffReason } from "@/lib/backend";
 
 const COUNT = 5;
 
@@ -74,7 +75,7 @@ export default function MealsScreen() {
     return (
       <View style={[styles.wrap, styles.center]} testID="meals-unavailable">
         <Text style={styles.heading}>Meals</Text>
-        <Text style={styles.muted}>Meal recommendations aren't available in this version of the app.</Text>
+        <Text style={styles.muted}>Meal recommendations aren't available. {backendOffReason()}</Text>
       </View>
     );
   }

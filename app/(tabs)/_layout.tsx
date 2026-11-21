@@ -1,7 +1,18 @@
-import React from "react";
-import { Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import { Tabs, router } from "expo-router";
 import { Text } from "react-native";
 import { colors } from "@/constants/theme";
+import { configureForegroundHandling, onPushTapped, refreshRegistration } from "@/lib/pushNotifications";
+
+/** Push is optional: these calls are no-ops when it is off, unsupported or denied. */
+function usePushSetup() {
+  useEffect(() => {
+    configureForegroundHandling();
+    refreshRegistration();
+    return onPushTapped((target) =>
+      router.push(target.params ? { pathname: target.pathname, params: target.params } : target.pathname));
+  }, []);
+}
 
 function TabIcon({ symbol, focused }: { symbol: string; focused: boolean }) {
   return (
@@ -10,6 +21,7 @@ function TabIcon({ symbol, focused }: { symbol: string; focused: boolean }) {
 }
 
 export default function TabsLayout() {
+  usePushSetup();
   return (
     <Tabs
       screenOptions={{
