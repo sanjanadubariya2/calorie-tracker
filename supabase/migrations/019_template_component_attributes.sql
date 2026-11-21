@@ -39,7 +39,7 @@ as $$
              'max_servings', c.max_servings, 'servings_step', c.servings_step, 'optional', c.optional,
              'serving_label', sn.serving_label, 'serving_grams', sn.serving_grams,
              'per_serving', case when sn.food_id is null then null else jsonb_build_object(
-               'calories', sn.calories, 'protein_g', sn.protein_g, 'carbs_g', sn.carbs_g, 'fat_g', sn.fat_g) end,
+             'calories', sn.calories, 'protein_g', sn.protein_g, 'carbs_g', sn.carbs_g, 'fat_g', sn.fat_g) end,
              -- This component's own attributes; a hidden (inactive) food is unknown.
              'diet_class', coalesce(a.diet_class, 'unknown'),
              'diet_status', case when f.id is null then 'unknown' else coalesce(a.diet_status, 'unknown') end,
