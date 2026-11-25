@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.progressTrack, alignItems: "center", justifyContent: "center",
   },
   dotSmall: { width: 12, height: 12, borderRadius: 6 },
-  tick: { fontSize: 12, fontWeight: "700", color: "#0A0A0A" },
+  tick: { fontSize: 12, fontWeight: "700", color: colors.onAccent },
   count: { ...typography.caption, color: colors.textSecondary, marginLeft: spacing.xs },
   track: { height: 8, borderRadius: radius.pill, backgroundColor: colors.progressTrack, overflow: "hidden" },
   fill: { height: "100%", borderRadius: radius.pill },

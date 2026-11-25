@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pillBackground,
   },
   label: {
-    color: "#0A0A0A",
+    color: colors.onAccent,
     fontWeight: "700",
     // Sits above the blobs regardless of which corners are filled.
     textShadowColor: "rgba(255,255,255,0.35)",

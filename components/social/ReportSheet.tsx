@@ -62,7 +62,7 @@ export function ReportSheet({ target, onClose }: Props) {
                 <Pressable onPress={() => close(false)} style={styles.secondary}><Text style={styles.secondaryText}>Cancel</Text></Pressable>
                 <Pressable testID="report-submit" onPress={submit} disabled={!reason || busy}
                            style={[styles.primary, styles.flex, (!reason || busy) && styles.disabled]}>
-                  {busy ? <ActivityIndicator color="#0A0A0A" /> : <Text style={styles.primaryText}>Report</Text>}
+                  {busy ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.primaryText}>Report</Text>}
                 </Pressable>
               </View>
             </>
@@ -74,7 +74,7 @@ export function ReportSheet({ target, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", padding: spacing.lg },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "center", padding: spacing.lg },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.cardBorder },
   title: { ...typography.title, fontSize: 18, color: colors.textPrimary, marginBottom: spacing.sm },
   body: { ...typography.body, fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg },
   flex: { flex: 1, marginTop: 0 },
   primary: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.sm, alignItems: "center", marginTop: spacing.lg },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
   secondary: { borderWidth: 1, borderColor: colors.cardBorder, borderRadius: radius.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
   secondaryText: { ...typography.label, color: colors.textPrimary },
   disabled: { opacity: 0.4 },

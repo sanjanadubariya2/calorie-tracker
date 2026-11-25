@@ -220,7 +220,7 @@ export function ActivityFeed({ onFindFriends, focus }: Props) {
           }
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator testID="feed-loading-more" color={colors.progressFill} style={{ margin: spacing.md }} />
+              <ActivityIndicator testID="feed-loading-more" color={colors.link} style={{ margin: spacing.md }} />
             ) : moreError ? (
               <Pressable testID="feed-more-retry" onPress={loadMore} style={styles.footer}>
                 <Text style={styles.link}>Couldn't load more. Tap to retry.</Text>
@@ -268,9 +268,9 @@ const styles = StyleSheet.create({
   emptyTitle: { ...typography.label, fontSize: 16, color: colors.textPrimary, textAlign: "center" },
   emptyBody: { ...typography.caption, color: colors.textSecondary, textAlign: "center", marginTop: spacing.sm, lineHeight: 18, maxWidth: 320 },
   primary: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.lg },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
   footer: { alignItems: "center", padding: spacing.md },
-  link: { ...typography.label, color: colors.progressFill },
+  link: { ...typography.label, color: colors.link },
   actionError: { ...typography.caption, color: colors.danger, marginBottom: spacing.sm },
   end: { ...typography.caption, color: colors.textTertiary, textAlign: "center", padding: spacing.md },
 });

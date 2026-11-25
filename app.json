@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "scheme": "calorietracker",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#F2F4EE"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,7 +19,7 @@
       "package": "com.calorietracker.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#F2F4EE"
       }
     },
     "web": {
@@ -55,7 +55,8 @@
             }
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "router": {

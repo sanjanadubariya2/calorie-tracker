@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { ActivityFeed } from "@/components/social/ActivityFeed";
 import { ChallengesSection } from "@/components/social/ChallengesSection";
@@ -64,7 +65,7 @@ export default function FriendsScreen() {
           <Text style={styles.title}>Friends</Text>
           <Pressable testID="open-notifications" onPress={() => setNotificationsOpen(true)} hitSlop={10}
                      accessibilityLabel={unread ? `Notifications, ${unread} unread` : "Notifications"}>
-            <Text style={styles.bell}>🔔</Text>
+            <Feather name="bell" size={20} color={colors.textPrimary} />
             {unread > 0 ? (
               <View style={styles.badge} testID="unread-badge">
                 <Text style={styles.badgeText}>{unread > 99 ? "99+" : unread}</Text>
@@ -110,16 +111,15 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
   title: { ...typography.title, color: colors.textPrimary },
-  bell: { fontSize: 22 },
   badge: {
     position: "absolute", top: -4, right: -8, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4,
     backgroundColor: colors.danger, alignItems: "center", justifyContent: "center",
   },
   badgeText: { fontSize: 10, fontWeight: "700", color: "#FFFFFF" },
-  segment: { flexDirection: "row", backgroundColor: colors.card, borderRadius: radius.pill, padding: 3, marginBottom: spacing.sm },
+  segment: { flexDirection: "row", backgroundColor: colors.pillBackground, borderRadius: radius.pill, padding: 3, marginBottom: spacing.sm },
   item: { flex: 1, alignItems: "center", paddingVertical: spacing.sm, borderRadius: radius.pill },
-  itemActive: { backgroundColor: colors.pillBackground, borderWidth: 1, borderColor: colors.cardBorder },
+  itemActive: { backgroundColor: colors.primary },
   itemText: { ...typography.label, color: colors.textSecondary },
-  itemTextActive: { color: colors.textPrimary },
+  itemTextActive: { color: colors.onPrimary },
   body: { flex: 1 },
 });

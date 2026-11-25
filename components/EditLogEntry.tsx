@@ -155,9 +155,9 @@ export function EditLogEntry({ log, onCancel, onSaved }: Props) {
           <Text style={styles.previewKcal}>{scaled.calories.toLocaleString()} kcal</Text>
           {canRescale && (
             <View style={styles.macroRow}>
-              <Text style={[styles.macro, { color: colors.carb }]}>C {scaled.carbsG} g</Text>
-              <Text style={[styles.macro, { color: colors.fat }]}>F {scaled.fatG} g</Text>
-              <Text style={[styles.macro, { color: colors.protein }]}>P {scaled.proteinG} g</Text>
+              <Text style={[styles.macro, { color: colors.carbText }]}>C {scaled.carbsG} g</Text>
+              <Text style={[styles.macro, { color: colors.fatText }]}>F {scaled.fatG} g</Text>
+              <Text style={[styles.macro, { color: colors.proteinText }]}>P {scaled.proteinG} g</Text>
             </View>
           )}
         </View>
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   mealChipTextActive: {
-    color: "#0A0A0A",
+    color: colors.onAccent,
     fontWeight: "700",
   },
   previewKcal: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   saveText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
   disabled: {
     opacity: 0.4,

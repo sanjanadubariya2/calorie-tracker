@@ -100,7 +100,7 @@ function FoodRow({ name, detail, kcal, protein, sub }: { name: string; detail: s
       </View>
       <View style={styles.foodNumbers}>
         <Text style={styles.foodKcal}>{kcal}</Text>
-        <Text style={[styles.foodDetail, { color: colors.protein }]}>{protein}</Text>
+        <Text style={[styles.foodDetail, { color: colors.proteinText }]}>{protein}</Text>
       </View>
     </View>
   );

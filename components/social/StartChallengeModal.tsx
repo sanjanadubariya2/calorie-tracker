@@ -67,7 +67,7 @@ export function StartChallengeModal({ entry, loadFriends, busy, error, onStart, 
           <Text style={styles.section}>Invite friends (optional)</Text>
           <ScrollView style={{ maxHeight: 240 }}>
             {friends === null ? (
-              <ActivityIndicator color={colors.progressFill} />
+              <ActivityIndicator color={colors.link} />
             ) : friends.length === 0 ? (
               <Text style={styles.small}>No friends to invite yet. You can still do it on your own.</Text>
             ) : (
@@ -91,7 +91,7 @@ export function StartChallengeModal({ entry, loadFriends, busy, error, onStart, 
 
           <Pressable testID="start-confirm" style={styles.primary} disabled={busy}
                      onPress={() => onStart(entry, selected, tomorrow)}>
-            {busy ? <ActivityIndicator color="#0A0A0A" /> : (
+            {busy ? <ActivityIndicator color={colors.onAccent} /> : (
               <Text style={styles.primaryText}>
                 {selected.length ? `Start with ${selected.length} friend${selected.length === 1 ? "" : "s"}` : "Start challenge"}
               </Text>
@@ -104,7 +104,7 @@ export function StartChallengeModal({ entry, loadFriends, busy, error, onStart, 
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
     padding: spacing.lg, maxHeight: "90%", borderWidth: 1, borderColor: colors.cardBorder,
@@ -123,9 +123,9 @@ const styles = StyleSheet.create({
   friendName: { ...typography.body, fontSize: 15, color: colors.textPrimary, flex: 1 },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.cardBorder, alignItems: "center", justifyContent: "center" },
   boxOn: { backgroundColor: colors.progressFill, borderColor: colors.progressFill },
-  tick: { fontSize: 13, fontWeight: "700", color: "#0A0A0A" },
+  tick: { fontSize: 13, fontWeight: "700", color: colors.onAccent },
   small: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.sm, lineHeight: 17 },
   error: { ...typography.caption, color: colors.danger, marginTop: spacing.sm },
   primary: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.md, alignItems: "center", marginTop: spacing.lg },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
 });

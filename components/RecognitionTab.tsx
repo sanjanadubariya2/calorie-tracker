@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { MEAL_SLOTS, colors, radius, spacing, typography, type MealType } from "@/constants/theme";
 import type { NewFoodLog } from "@/lib/types";
 import {
@@ -207,7 +208,7 @@ export function RecognitionTab({ initialMeal, loggedDate, addLog, onDone, onManu
         : "Recognising foods and matching nutrition…";
     return (
       <View style={styles.centered} testID="recognition-working">
-        <ActivityIndicator color={colors.progressFill} size="large" />
+        <ActivityIndicator color={colors.link} size="large" />
         <Text style={styles.body}>{label}</Text>
         {p?.stage === "uploading" && p.fraction !== null && (
           <View style={styles.progressTrack}>
@@ -245,11 +246,11 @@ export function RecognitionTab({ initialMeal, loggedDate, addLog, onDone, onManu
         </Text>
         <View style={styles.photoRow}>
           <Pressable style={styles.photoButton} onPress={() => choosePhoto("camera")} testID="take-photo">
-            <Text style={styles.photoIcon}>📷</Text>
+            <Feather name="camera" size={24} color={colors.onAccent} />
             <Text style={styles.photoText}>Take photo</Text>
           </Pressable>
           <Pressable style={styles.photoButton} onPress={() => choosePhoto("library")} testID="upload-photo">
-            <Text style={styles.photoIcon}>🖼️</Text>
+            <Feather name="image" size={24} color={colors.onAccent} />
             <Text style={styles.photoText}>Upload photo</Text>
           </Pressable>
         </View>
@@ -399,7 +400,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: "center",
   },
-  photoIcon: { fontSize: 28 },
   photoText: { ...typography.label, color: colors.textPrimary, marginTop: spacing.sm },
   inputLabel: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.lg },
   input: {
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     alignSelf: "stretch",
   },
-  primaryButtonText: { ...typography.label, color: colors.background },
+  primaryButtonText: { ...typography.label, color: colors.onAccent },
   buttonDisabled: { opacity: 0.4 },
   secondaryButton: {
     borderWidth: 1,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
   secondaryButtonText: { ...typography.label, color: colors.textPrimary },
-  link: { ...typography.label, color: colors.progressFill, textAlign: "center", marginTop: spacing.md },
+  link: { ...typography.label, color: colors.link, textAlign: "center", marginTop: spacing.md },
   errorText: { ...typography.caption, color: colors.danger, textAlign: "center", marginBottom: spacing.sm },
   progressTrack: { height: 6, alignSelf: "stretch", backgroundColor: colors.progressTrack, borderRadius: radius.pill },
   progressFill: { height: 6, backgroundColor: colors.progressFill, borderRadius: radius.pill },
@@ -446,10 +446,10 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.progressFill },
   chipText: { ...typography.caption, color: colors.textSecondary },
-  chipTextActive: { color: colors.background },
+  chipTextActive: { color: colors.onPrimary },
   banner: {
     ...typography.caption,
-    color: colors.badgeActive,
+    color: colors.warning,
     backgroundColor: colors.card,
     borderRadius: radius.sm,
     padding: spacing.sm,

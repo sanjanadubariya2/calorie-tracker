@@ -1,7 +1,20 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { MEAL_SLOTS, colors, radius, spacing, typography, type MealType } from "@/constants/theme";
+import { Feather } from "@expo/vector-icons";
+import { MEAL_SLOTS, colors, fonts, radius, spacing, typography, type MealType } from "@/constants/theme";
 import type { FoodLog } from "@/lib/types";
+
+type IconName = React.ComponentProps<typeof Feather>["name"];
+
+/** Icon tile per meal slot: tint background with a darker icon of the same hue. */
+const SLOT_STYLE: Record<MealType, { icon: IconName; tint: string; ink: string }> = {
+  breakfast: { icon: "sunrise", tint: "#FDEFD3", ink: "#9A6510" },
+  lunch: { icon: "sun", tint: "#DDF0E3", ink: "#1C5240" },
+  dinner: { icon: "moon", tint: "#E7E2FA", ink: "#4E3BA6" },
+  morning_snack: { icon: "coffee", tint: "#FBE3DA", ink: "#A63E1F" },
+  afternoon_snack: { icon: "coffee", tint: "#FBE3DA", ink: "#A63E1F" },
+  evening_snack: { icon: "coffee", tint: "#FBE3DA", ink: "#A63E1F" },
+};
 
 interface Props {
   logsByMeal: Record<MealType, FoodLog[]>;
@@ -31,19 +44,23 @@ export function MealSlotList({ logsByMeal, onAddPress, onSlotPress, visibleMeals
               onPress={() => onSlotPress?.(slot.key)}
               accessibilityRole="button"
             >
-              <View style={styles.kcalPill}>
-                <Text style={styles.kcalValue}>{Math.round(totalKcal).toLocaleString()}</Text>
-                <Text style={styles.kcalUnit}>kcal</Text>
+              <View style={[styles.iconTile, { backgroundColor: SLOT_STYLE[slot.key].tint }]}>
+                <Feather name={SLOT_STYLE[slot.key].icon} size={22} color={SLOT_STYLE[slot.key].ink} />
               </View>
 
               <View style={styles.textCol}>
                 <Text style={styles.mealName}>{slot.label}</Text>
-                {itemNames.length > 0 && (
-                  <Text style={styles.itemNames} numberOfLines={2}>
-                    {itemNames}
-                  </Text>
-                )}
+                <Text style={styles.itemNames} numberOfLines={1}>
+                  {itemNames.length > 0 ? itemNames : "Nothing logged yet"}
+                </Text>
               </View>
+
+              {totalKcal > 0 && (
+                <Text style={styles.kcalValue}>
+                  {Math.round(totalKcal).toLocaleString()}
+                  <Text style={styles.kcalUnit}> kcal</Text>
+                </Text>
+              )}
 
               <Pressable
                 style={styles.addButton}
@@ -56,7 +73,7 @@ export function MealSlotList({ logsByMeal, onAddPress, onSlotPress, visibleMeals
                 hitSlop={12}
                 accessibilityLabel={`Add food to ${slot.label}`}
               >
-                <Text style={styles.addButtonText}>+</Text>
+                <Feather name="plus" size={18} color={colors.primary} />
               </Pressable>
             </Pressable>
             {index < slots.length - 1 && <View style={styles.divider} />}
@@ -71,59 +88,64 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginTop: 14,
   },
   title: {
     ...typography.title,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.md,
-    gap: spacing.md,
+    paddingVertical: 12,
+    gap: 12,
   },
-  kcalPill: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.pill,
-    backgroundColor: colors.pillBackground,
+  iconTile: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-  },
-  kcalValue: {
-    ...typography.label,
-    color: colors.textPrimary,
-  },
-  kcalUnit: {
-    ...typography.caption,
-    color: colors.textSecondary,
   },
   textCol: {
     flex: 1,
   },
   mealName: {
-    ...typography.body,
+    ...typography.label,
+    fontFamily: fonts.bodyBold,
     fontWeight: "700",
+    fontSize: 15,
     color: colors.textPrimary,
   },
   itemNames: {
     ...typography.caption,
+    fontFamily: fonts.body,
+    fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
   },
+  kcalValue: {
+    fontFamily: fonts.displayBold,
+    fontWeight: "700",
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  kcalUnit: {
+    ...typography.caption,
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
   addButton: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.pillBackground,
     alignItems: "center",
     justifyContent: "center",
-  },
-  addButtonText: {
-    fontSize: 24,
-    color: colors.textPrimary,
-    fontWeight: "300",
   },
   divider: {
     height: 1,

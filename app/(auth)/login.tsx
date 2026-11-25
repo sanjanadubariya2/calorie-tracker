@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
   linkRow: {
     marginTop: spacing.lg,

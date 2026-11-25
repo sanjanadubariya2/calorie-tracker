@@ -70,7 +70,7 @@ export function ConversationsSheet({ visible, conversations, activeId, hasMore, 
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
     padding: spacing.lg, maxHeight: "80%",
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   title: { ...typography.title, color: colors.textPrimary },
   close: { fontSize: 18, color: colors.textSecondary },
   newButton: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.sm, alignItems: "center", marginVertical: spacing.md },
-  newText: { ...typography.label, color: colors.background },
+  newText: { ...typography.label, color: colors.onAccent },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.divider },
   rowActive: { backgroundColor: colors.pillBackground, borderRadius: radius.sm, paddingHorizontal: spacing.sm },
   rowTitle: { ...typography.label, color: colors.textPrimary },

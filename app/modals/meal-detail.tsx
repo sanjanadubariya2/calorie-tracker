@@ -83,7 +83,7 @@ export default function MealDetailModal() {
 
         {loading ? (
           <View style={styles.centerBlock}>
-            <ActivityIndicator color={colors.progressFill} size="large" />
+            <ActivityIndicator color={colors.link} size="large" />
           </View>
         ) : logs.length === 0 ? (
           <View style={styles.centerBlock}>

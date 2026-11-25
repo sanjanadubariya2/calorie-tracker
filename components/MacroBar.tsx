@@ -17,9 +17,9 @@ export function MacroBar({ label, carbPct, fatPct, proteinPct, emphasized }: Pro
       <Text style={styles.label}>{label}</Text>
       {emphasized && (
         <View style={styles.percentRow}>
-          <Text style={[styles.percentText, { color: colors.carb }]}>{carbPct}%</Text>
-          <Text style={[styles.percentText, { color: colors.fat }]}>{fatPct}%</Text>
-          <Text style={[styles.percentText, { color: colors.protein }]}>{proteinPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.carbText }]}>{carbPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.fatText }]}>{fatPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.proteinText }]}>{proteinPct}%</Text>
         </View>
       )}
       <View style={[styles.bar, emphasized ? styles.barTall : styles.barThin]}>
@@ -29,9 +29,9 @@ export function MacroBar({ label, carbPct, fatPct, proteinPct, emphasized }: Pro
       </View>
       {!emphasized && (
         <View style={styles.percentRow}>
-          <Text style={[styles.percentText, { color: colors.carb }]}>{carbPct}%</Text>
-          <Text style={[styles.percentText, { color: colors.fat }]}>{fatPct}%</Text>
-          <Text style={[styles.percentText, { color: colors.protein }]}>{proteinPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.carbText }]}>{carbPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.fatText }]}>{fatPct}%</Text>
+          <Text style={[styles.percentText, { color: colors.proteinText }]}>{proteinPct}%</Text>
         </View>
       )}
     </View>
@@ -57,12 +57,13 @@ const styles = StyleSheet.create({
   },
   bar: {
     flexDirection: "row",
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     overflow: "hidden",
+    gap: 2,
     width: "100%",
   },
   barTall: {
-    height: 32,
+    height: 14,
   },
   barThin: {
     height: 6,

@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@/constants/theme";
+import { Feather } from "@expo/vector-icons";
+import { colors, fonts, radius, spacing, typography } from "@/constants/theme";
 
 interface Props {
   currentStreak: number;
@@ -22,8 +23,17 @@ export function BadgeRow({ currentStreak, goalDays = 7, onPress }: Props) {
   return (
     <Pressable style={styles.card} onPress={onPress} disabled={!onPress} testID="badge-row"
                accessibilityRole={onPress ? "button" : undefined} accessibilityHint="Opens your achievements">
-      <Text style={styles.title}>Badge progress</Text>
-      <Text style={styles.subtitle}>{message}</Text>
+      <View style={styles.header}>
+        <View style={styles.flameTile}>
+          <Feather name="zap" size={24} color={colors.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>
+            {currentStreak > 0 ? `${currentStreak}-day streak` : "Badge progress"}
+          </Text>
+          <Text style={styles.subtitle}>{message}</Text>
+        </View>
+      </View>
 
       <View style={styles.row}>
         <View style={styles.slotsRow}>
@@ -32,7 +42,7 @@ export function BadgeRow({ currentStreak, goalDays = 7, onPress }: Props) {
             return (
               <View key={day} style={[styles.slot, filled && styles.slotFilled]}>
                 {filled ? (
-                  <Text style={styles.checkmark}>✓</Text>
+                  <Feather name="check" size={16} color={colors.accent} />
                 ) : (
                   <Text style={styles.slotNumber}>{day}</Text>
                 )}
@@ -41,7 +51,7 @@ export function BadgeRow({ currentStreak, goalDays = 7, onPress }: Props) {
           })}
         </View>
         <View style={styles.trophyWrap}>
-          <Text style={styles.trophyEmoji}>🏆</Text>
+          <Feather name="award" size={30} color={colors.primary} />
           <Text style={styles.trophyCount}>{goalDays}</Text>
         </View>
       </View>
@@ -51,60 +61,69 @@ export function BadgeRow({ currentStreak, goalDays = 7, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  link: { ...typography.caption, color: colors.progressFill, marginTop: spacing.md },
+  link: { ...typography.label, color: colors.onAccent, marginTop: spacing.md },
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.accent,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    padding: 18,
+    marginTop: 14,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  flameTile: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     ...typography.title,
-    color: colors.textPrimary,
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.onAccent,
   },
   subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
+    ...typography.caption,
+    fontSize: 13,
+    color: colors.onAccent,
+    marginTop: 2,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   slotsRow: {
     flexDirection: "row",
-    gap: spacing.sm,
+    gap: 6,
   },
   slot: {
     width: 32,
     height: 32,
     borderRadius: radius.pill,
-    backgroundColor: colors.badgeInactive,
+    backgroundColor: "rgba(18, 61, 44, 0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
   slotFilled: {
-    backgroundColor: colors.badgeActive,
-  },
-  checkmark: {
-    color: "#1A1A1A",
-    fontWeight: "700",
+    backgroundColor: colors.primary,
   },
   slotNumber: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.onAccent,
   },
   trophyWrap: {
     alignItems: "center",
   },
-  trophyEmoji: {
-    fontSize: 40,
-  },
   trophyCount: {
     ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: -6,
+    color: colors.onAccent,
+    marginTop: 2,
   },
 });

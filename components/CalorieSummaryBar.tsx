@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@/constants/theme";
+import { colors, fonts, radius, spacing, typography } from "@/constants/theme";
 
 interface Props {
   consumed: number;
@@ -12,28 +12,25 @@ interface Props {
   maxScale: number;
 }
 
+/** Evergreen hero card: the day's headline number, what's left, and the track against the target. */
 export function CalorieSummaryBar({ consumed, target, rangeLow, rangeHigh, maxScale }: Props) {
   const fillPct = Math.min(100, (consumed / maxScale) * 100);
   const targetPct = Math.min(100, (target / maxScale) * 100);
+  const remaining = target - consumed;
+  const over = remaining < 0;
 
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
-        <View>
+        <View style={styles.numbers}>
+          <Text style={styles.kicker}>Calories eaten</Text>
           <Text style={styles.bigNumber}>{consumed.toLocaleString()}</Text>
-          <Text style={styles.unit}>kcal</Text>
+          <Text style={styles.kicker}>of {target.toLocaleString()} kcal target</Text>
         </View>
-        <View style={styles.targetInfo}>
-          <View style={styles.targetRow}>
-            <View style={styles.targetDot} />
-            <Text style={styles.targetText}>{target.toLocaleString()} kcal</Text>
-          </View>
-          <View style={styles.targetRow}>
-            <View style={styles.rangeDot} />
-            <Text style={styles.rangeText}>
-              {rangeLow.toLocaleString()} - {rangeHigh.toLocaleString()}
-            </Text>
-          </View>
+        <View style={styles.leftBadge} accessible accessibilityLabel={
+          over ? `${Math.abs(remaining)} kilocalories over target` : `${remaining} kilocalories left`}>
+          <Text style={styles.leftValue}>{Math.abs(remaining).toLocaleString()}</Text>
+          <Text style={styles.leftUnit}>{over ? "kcal over" : "kcal left"}</Text>
         </View>
       </View>
 
@@ -44,6 +41,9 @@ export function CalorieSummaryBar({ consumed, target, rangeLow, rangeHigh, maxSc
 
       <View style={styles.scaleRow}>
         <Text style={styles.scaleText}>0</Text>
+        <Text style={styles.scaleText}>
+          Healthy range {rangeLow.toLocaleString()} – {rangeHigh.toLocaleString()}
+        </Text>
         <Text style={styles.scaleText}>{maxScale.toLocaleString()}</Text>
       </View>
     </View>
@@ -52,58 +52,54 @@ export function CalorieSummaryBar({ consumed, target, rangeLow, rangeHigh, maxSc
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: radius.xl,
+    padding: 22,
   },
   topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  numbers: {
+    flex: 1,
+  },
+  kicker: {
+    ...typography.label,
+    fontFamily: fonts.bodyMedium,
+    fontWeight: "500",
+    fontSize: 13,
+    color: colors.heroMuted,
   },
   bigNumber: {
     ...typography.hero,
-    color: colors.textPrimary,
+    color: colors.onPrimary,
+    marginVertical: spacing.xs,
   },
-  unit: {
-    ...typography.body,
-    color: colors.textPrimary,
-    marginTop: spacing.xs,
-  },
-  targetInfo: {
-    alignItems: "flex-end",
-    gap: spacing.sm,
-  },
-  targetRow: {
-    flexDirection: "row",
+  leftBadge: {
+    width: 116,
+    height: 116,
+    borderRadius: radius.pill,
+    borderWidth: 12,
+    borderColor: colors.accent,
     alignItems: "center",
-    gap: spacing.sm,
+    justifyContent: "center",
   },
-  targetDot: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    borderColor: colors.textSecondary,
+  leftValue: {
+    fontFamily: fonts.display,
+    fontWeight: "800",
+    fontSize: 24,
+    color: colors.accent,
   },
-  rangeDot: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.pill,
-    backgroundColor: colors.textTertiary,
-  },
-  targetText: {
-    ...typography.label,
-    color: colors.textSecondary,
-  },
-  rangeText: {
-    ...typography.label,
-    color: colors.textSecondary,
+  leftUnit: {
+    ...typography.caption,
+    color: colors.heroMuted,
   },
   track: {
-    height: 14,
+    height: 10,
     borderRadius: radius.pill,
-    backgroundColor: colors.progressTrack,
+    backgroundColor: colors.heroTrack,
     marginTop: spacing.lg,
     overflow: "visible",
     justifyContent: "center",
@@ -114,16 +110,16 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: radius.pill,
-    backgroundColor: colors.progressFill,
+    backgroundColor: colors.accent,
   },
   targetMarker: {
     position: "absolute",
     width: 4,
-    height: 20,
-    top: -3,
+    height: 18,
+    top: -4,
     marginLeft: -2,
     borderRadius: 2,
-    backgroundColor: colors.textPrimary,
+    backgroundColor: colors.onPrimary,
   },
   scaleRow: {
     flexDirection: "row",
@@ -132,6 +128,6 @@ const styles = StyleSheet.create({
   },
   scaleText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.heroMuted,
   },
 });

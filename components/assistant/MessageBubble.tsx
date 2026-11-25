@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   userText: { ...typography.body, color: colors.textPrimary },
   failRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: 4, maxWidth: "85%" },
   errorText: { ...typography.caption, color: colors.danger, flexShrink: 1 },
-  retry: { ...typography.label, color: colors.progressFill },
+  retry: { ...typography.label, color: colors.link },
   assistantWrap: { alignItems: "flex-start", marginVertical: spacing.xs },
   assistantBubble: {
     backgroundColor: colors.card, borderRadius: radius.md, borderBottomLeftRadius: 4, borderWidth: 1,

@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.lg,
   },
-  shareButtonText: { ...typography.label, color: "#0A0A0A" },
+  shareButtonText: { ...typography.label, color: colors.onAccent },
   shareNote: {
     ...typography.caption,
     color: colors.textSecondary,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.md,
   },
-  primaryButtonText: { ...typography.label, color: "#0A0A0A" },
+  primaryButtonText: { ...typography.label, color: colors.onAccent },
   searchRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: spacing.md },
   atSign: { ...typography.body, color: colors.textSecondary },
   searchInput: {
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   searchMessage: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.sm },
   inviteRow: { marginTop: spacing.md, alignItems: "center" },
-  inviteText: { ...typography.label, color: colors.progressFill },
+  inviteText: { ...typography.label, color: colors.link },
   requestRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  acceptButtonText: { ...typography.label, color: "#0A0A0A" },
+  acceptButtonText: { ...typography.label, color: colors.onAccent },
   emptyBlock: { alignItems: "center", paddingVertical: spacing.xl },
   emptyTitle: { ...typography.label, color: colors.textSecondary },
   emptyBody: {

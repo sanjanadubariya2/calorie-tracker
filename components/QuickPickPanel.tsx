@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   clearAll: {
     ...typography.label,
-    color: colors.progressFill,
+    color: colors.link,
   },
   chipWrap: {
     flexDirection: "row",
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   starFilled: {
     fontSize: 22,
-    color: colors.badgeActive,
+    color: colors.warning,
   },
   emptyWrap: {
     alignItems: "center",

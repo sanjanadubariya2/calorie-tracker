@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.caption,
-    color: "#1A1A1A",
+    color: colors.onAccent,
     textAlign: "center",
   },
 });

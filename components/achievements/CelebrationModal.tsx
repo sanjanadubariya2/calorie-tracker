@@ -104,13 +104,13 @@ export function CelebrationModal({ queue, onDone }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", alignItems: "center", justifyContent: "center", padding: spacing.lg, overflow: "hidden" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", alignItems: "center", justifyContent: "center", padding: spacing.lg, overflow: "hidden" },
   piece: { position: "absolute", top: 0, borderRadius: 2 },
   card: {
     width: "100%", maxWidth: 360, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg,
     alignItems: "center", borderWidth: 1, borderColor: colors.cardBorder,
   },
-  kicker: { ...typography.caption, color: colors.badgeActive, textTransform: "uppercase", letterSpacing: 1 },
+  kicker: { ...typography.caption, color: colors.warning, textTransform: "uppercase", letterSpacing: 1 },
   badge: {
     width: 104, height: 104, borderRadius: 52, backgroundColor: colors.pillBackground, borderWidth: 3,
     borderColor: colors.badgeActive, alignItems: "center", justifyContent: "center", marginVertical: spacing.lg,
@@ -120,5 +120,5 @@ const styles = StyleSheet.create({
   body: { ...typography.body, fontSize: 15, color: colors.textSecondary, textAlign: "center", marginTop: spacing.sm },
   count: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.md },
   button: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.md, alignSelf: "stretch", alignItems: "center", marginTop: spacing.lg },
-  buttonText: { ...typography.label, color: "#0A0A0A" },
+  buttonText: { ...typography.label, color: colors.onAccent },
 });

@@ -211,14 +211,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabButtonActive: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.primary,
   },
   tabText: {
     ...typography.label,
     color: colors.textSecondary,
   },
   tabTextActive: {
-    color: colors.textPrimary,
+    color: colors.onPrimary,
   },
   body: {
     flex: 1,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   savingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(19,32,26,0.45)",
     alignItems: "center",
     justifyContent: "center",
   },

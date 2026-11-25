@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   chipTextActive: {
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
   goalList: {
     gap: spacing.sm,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   previewValue: {
     ...typography.title,
-    color: colors.progressFill,
+    color: colors.link,
     marginTop: spacing.xs,
   },
   errorText: {
@@ -348,6 +348,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
 });
