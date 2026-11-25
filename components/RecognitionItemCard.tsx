@@ -167,9 +167,9 @@ export function RecognitionItemCard({ item, disabled, onRename, onSelectFood, on
       {g?.nutrition ? (
         <View style={styles.nutritionRow} testID="item-nutrition">
           <Text style={styles.kcal}>{fmt(g.nutrition.calories)} kcal</Text>
-          <Text style={[styles.macro, { color: colors.protein }]}>P {fmt(g.nutrition.protein_g)} g</Text>
-          <Text style={[styles.macro, { color: colors.carb }]}>C {fmt(g.nutrition.carbs_g)} g</Text>
-          <Text style={[styles.macro, { color: colors.fat }]}>F {fmt(g.nutrition.fat_g)} g</Text>
+          <Text style={[styles.macro, { color: colors.proteinText }]}>P {fmt(g.nutrition.protein_g)} g</Text>
+          <Text style={[styles.macro, { color: colors.carbText }]}>C {fmt(g.nutrition.carbs_g)} g</Text>
+          <Text style={[styles.macro, { color: colors.fatText }]}>F {fmt(g.nutrition.fat_g)} g</Text>
         </View>
       ) : null}
       {g?.nutrition && <Text style={styles.caption}>Source: {sourceLabel(g.nutrition.source, g.nutrition.source_ref)}</Text>}
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.progressFill },
   chipText: { ...typography.caption, color: colors.textSecondary },
-  chipTextActive: { color: colors.background },
+  chipTextActive: { color: colors.onPrimary },
   portionRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.xs },
   input: {
     borderWidth: 1,
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
   nutritionRow: { flexDirection: "row", alignItems: "baseline", marginTop: spacing.md, flexWrap: "wrap" },
   kcal: { ...typography.title, color: colors.textPrimary, marginRight: spacing.md },
   macro: { ...typography.label, marginRight: spacing.md },
-  warning: { ...typography.caption, color: colors.badgeActive, marginTop: spacing.xs },
+  warning: { ...typography.caption, color: colors.warning, marginTop: spacing.xs },
   pendingRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm, gap: spacing.sm },
   error: { ...typography.caption, color: colors.danger, flex: 1 },
-  link: { ...typography.label, color: colors.progressFill },
+  link: { ...typography.label, color: colors.link },
 });

@@ -23,9 +23,9 @@ export function NutritionCard({ carbsG, fatG, proteinG, split }: Props) {
       </View>
 
       <View style={styles.macroCardsRow}>
+        <MacroStat label="Protein" value={proteinG} color={colors.protein} />
         <MacroStat label="Carb" value={carbsG} color={colors.carb} />
         <MacroStat label="Fat" value={fatG} color={colors.fat} />
-        <MacroStat label="Protein" value={proteinG} color={colors.protein} />
       </View>
 
       <MacroBar
@@ -49,7 +49,10 @@ export function NutritionCard({ carbsG, fatG, proteinG, split }: Props) {
 function MacroStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <View style={styles.macroStat}>
-      <Text style={[styles.macroLabel, { color }]}>{label}</Text>
+      <View style={styles.macroLabelRow}>
+        <View style={[styles.dot, { backgroundColor: color }]} />
+        <Text style={styles.macroLabel}>{label}</Text>
+      </View>
       <Text style={styles.macroValue}>
         {Math.round(value * 10) / 10}
         <Text style={styles.macroUnit}> g</Text>
@@ -62,8 +65,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    padding: 18,
+    marginTop: 14,
   },
   headerRow: {
     flexDirection: "row",
@@ -81,15 +84,24 @@ const styles = StyleSheet.create({
   },
   macroStat: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    backgroundColor: colors.background,
     borderRadius: radius.md,
-    paddingVertical: spacing.md,
+    padding: 14,
+  },
+  macroLabelRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+    marginBottom: spacing.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
   },
   macroLabel: {
-    ...typography.label,
-    marginBottom: spacing.xs,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   macroValue: {
     ...typography.title,

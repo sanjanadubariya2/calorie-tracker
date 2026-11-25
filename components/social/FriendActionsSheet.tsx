@@ -38,7 +38,7 @@ export function FriendActionsSheet({ friend, onRemove, onBlock, onReport, onClos
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", padding: spacing.lg },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "center", padding: spacing.lg },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.cardBorder },
   title: { ...typography.title, fontSize: 18, color: colors.textPrimary, marginBottom: spacing.sm },
   row: { paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.divider },

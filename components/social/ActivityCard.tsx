@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   header: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: spacing.sm },
   name: { ...typography.label, color: colors.textPrimary, flexShrink: 1 },
-  me: { color: colors.progressFill },
+  me: { color: colors.link },
   time: { ...typography.caption, color: colors.textTertiary },
   title: { ...typography.body, fontSize: 15, color: colors.textSecondary, marginTop: 2, lineHeight: 20 },
   iconWrap: {

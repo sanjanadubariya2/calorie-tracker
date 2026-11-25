@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
 export interface DayTotal {
@@ -24,8 +25,11 @@ export function WeeklyChart({ days, averageKcal, onPress }: Props) {
   return (
     <Pressable style={styles.card} onPress={onPress} disabled={!onPress}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Calorie intake over last 7 days</Text>
-        {onPress && <Text style={styles.chevron}>›</Text>}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Last 7 days</Text>
+          <Text style={styles.subtitle}>Calorie intake · avg. {Math.round(averageKcal).toLocaleString()} kcal</Text>
+        </View>
+        {onPress && <Feather name="chevron-right" size={20} color={colors.textSecondary} />}
       </View>
 
       <View style={styles.chartArea}>
@@ -35,10 +39,6 @@ export function WeeklyChart({ days, averageKcal, onPress }: Props) {
             { bottom: (averageKcal / maxValue) * CHART_HEIGHT },
           ]}
         />
-        <View style={styles.avgLabelWrap}>
-          <Text style={styles.avgLabel}>Avg.</Text>
-          <Text style={styles.avgValue}>{Math.round(averageKcal).toLocaleString()}</Text>
-        </View>
 
         <View style={styles.barsRow}>
           {days.map((day) => {
@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
+    padding: 18,
+    marginTop: 14,
   },
   headerRow: {
     flexDirection: "row",
@@ -81,45 +81,26 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.title,
+    fontSize: 17,
     color: colors.textPrimary,
-    flex: 1,
   },
-  chevron: {
-    fontSize: 22,
+  subtitle: {
+    ...typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
-    paddingLeft: spacing.sm,
+    marginTop: 2,
   },
   chartArea: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     position: "relative",
   },
   avgLine: {
     position: "absolute",
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+    borderTopWidth: 2,
     borderStyle: "dashed",
-    borderColor: colors.textTertiary,
-  },
-  avgLabelWrap: {
-    position: "absolute",
-    right: 0,
-    top: -28,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    alignItems: "center",
-  },
-  avgLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  avgValue: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontWeight: "700",
+    borderColor: colors.chartPast,
   },
   barsRow: {
     flexDirection: "row",
@@ -136,8 +117,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   bar: {
-    width: 10,
-    borderRadius: radius.pill,
+    width: 26,
+    borderRadius: 10,
   },
   dayLabel: {
     ...typography.caption,

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Feather } from "@expo/vector-icons";
 import {
   ActivityIndicator,
   FlatList,
@@ -81,11 +82,11 @@ export default function AssistantScreen() {
     <KeyboardAvoidingView style={styles.wrap} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.header}>
         <Pressable onPress={() => setHistoryOpen(true)} hitSlop={12} testID="open-history">
-          <Text style={styles.headerIcon}>☰</Text>
+          <Feather name="menu" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
         <Pressable onPress={() => a.openConversation(null)} hitSlop={12} disabled={state.activeId === null} testID="new-conversation">
-          <Text style={[styles.headerIcon, state.activeId === null && { opacity: 0.3 }]}>✎</Text>
+          <Feather name="edit-3" size={20} color={colors.textPrimary} style={state.activeId === null ? { opacity: 0.3 } : undefined} />
         </Pressable>
       </View>
 
@@ -99,7 +100,7 @@ export default function AssistantScreen() {
       {thread.items.length === 0 && !sending ? (
         <View style={styles.empty} testID="assistant-empty">
           {state.activeId !== null && !thread.loaded ? (
-            <ActivityIndicator color={colors.progressFill} />
+            <ActivityIndicator color={colors.link} />
           ) : (
             <>
               <Text style={styles.emptyTitle}>Ask about your nutrition</Text>
@@ -191,13 +192,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
   headerTitle: { ...typography.title, color: colors.textPrimary, flex: 1, textAlign: "center", marginHorizontal: spacing.md },
-  headerIcon: { fontSize: 20, color: colors.textPrimary, width: 24, textAlign: "center" },
   banner: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.card,
     borderColor: colors.danger, borderWidth: 1, borderRadius: radius.sm, margin: spacing.md, padding: spacing.sm,
   },
   bannerText: { ...typography.caption, color: colors.textPrimary },
-  bannerLink: { ...typography.label, color: colors.progressFill },
+  bannerLink: { ...typography.label, color: colors.link },
   empty: { flex: 1, paddingHorizontal: spacing.lg, justifyContent: "center" },
   emptyTitle: { ...typography.title, color: colors.textPrimary, marginBottom: spacing.sm },
   muted: { ...typography.body, color: colors.textSecondary, textAlign: "left" },
@@ -219,5 +219,5 @@ const styles = StyleSheet.create({
   },
   send: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.progressFill, alignItems: "center", justifyContent: "center" },
   sendDisabled: { opacity: 0.4 },
-  sendText: { fontSize: 18, fontWeight: "700", color: colors.background },
+  sendText: { fontSize: 18, fontWeight: "700", color: colors.onAccent },
 });

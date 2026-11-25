@@ -32,9 +32,9 @@ export function RecommendationCard({ item, saved, busy, onOpen, onSave, onNotInt
         <View style={styles.macros} accessible accessibilityLabel={
           `${n.kcal} kilocalories, protein ${n.protein_g} grams, carbohydrate ${n.carbs_g} grams, fat ${n.fat_g} grams`}>
           <Text style={styles.kcal} testID={`rec-kcal-${tid}`}>{n.kcal} kcal</Text>
-          <Text style={[styles.macro, { color: colors.protein }]}>P {n.protein_g} g</Text>
-          <Text style={[styles.macro, { color: colors.carb }]}>C {n.carbs_g} g</Text>
-          <Text style={[styles.macro, { color: colors.fat }]}>F {n.fat_g} g</Text>
+          <Text style={[styles.macro, { color: colors.proteinText }]}>P {n.protein_g} g</Text>
+          <Text style={[styles.macro, { color: colors.carbText }]}>C {n.carbs_g} g</Text>
+          <Text style={[styles.macro, { color: colors.fatText }]}>F {n.fat_g} g</Text>
           {item.optional_components.length > 0 && <Text style={styles.macro}>base meal</Text>}
         </View>
         {optionalText(item) && <Text style={styles.reason} testID={`rec-optional-${tid}`}>{optionalText(item)}</Text>}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     ...typography.caption, color: colors.textSecondary, backgroundColor: colors.pillBackground,
     borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2, overflow: "hidden",
   },
-  badgeCaution: { color: colors.protein },
+  badgeCaution: { color: colors.proteinText },
   actions: {
     flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: spacing.md, marginTop: spacing.md,
     borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: spacing.sm,

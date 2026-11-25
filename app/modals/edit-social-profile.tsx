@@ -105,7 +105,7 @@ export default function EditSocialProfileModal() {
   if (loading) {
     return (
       <View style={styles.centerScreen}>
-        <ActivityIndicator color={colors.progressFill} size="large" />
+        <ActivityIndicator color={colors.link} size="large" />
       </View>
     );
   }
@@ -258,6 +258,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: "center",
   },
-  primaryButtonText: { ...typography.label, color: "#0A0A0A" },
+  primaryButtonText: { ...typography.label, color: colors.onAccent },
   disabled: { opacity: 0.5 },
 });

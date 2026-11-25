@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing, typography } from "@/constants/theme";
+import { Feather } from "@expo/vector-icons";
+import { colors, fonts, radius, spacing, typography } from "@/constants/theme";
 
 export interface HeaderMenuItem {
   label: string;
@@ -15,6 +16,8 @@ interface Props {
   onNextDay: () => void;
   onJumpToToday: () => void;
   menuItems: HeaderMenuItem[];
+  /** Profile lives behind this button now that it is no longer a tab. */
+  onProfilePress?: () => void;
 }
 
 export function DashboardHeader({
@@ -24,6 +27,7 @@ export function DashboardHeader({
   onNextDay,
   onJumpToToday,
   menuItems,
+  onProfilePress,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -31,7 +35,7 @@ export function DashboardHeader({
     <View style={styles.wrap}>
       <View style={styles.pager}>
         <Pressable style={styles.chevron} onPress={onPrevDay} hitSlop={12} accessibilityLabel="Previous day">
-          <Text style={styles.chevronText}>‹</Text>
+          <Feather name="chevron-left" size={20} color={colors.textPrimary} />
         </Pressable>
 
         <Pressable
@@ -51,18 +55,25 @@ export function DashboardHeader({
           hitSlop={12}
           accessibilityLabel="Next day"
         >
-          <Text style={[styles.chevronText, isToday && styles.chevronTextDisabled]}>›</Text>
+          <Feather name="chevron-right" size={20} color={isToday ? colors.textTertiary : colors.textPrimary} />
         </Pressable>
       </View>
 
-      <Pressable
-        style={styles.menuButton}
-        onPress={() => setMenuOpen(true)}
-        hitSlop={12}
-        accessibilityLabel="More options"
-      >
-        <Text style={styles.menuButtonText}>⋮</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          style={styles.menuButton}
+          onPress={() => setMenuOpen(true)}
+          hitSlop={8}
+          accessibilityLabel="More options"
+        >
+          <Feather name="more-horizontal" size={20} color={colors.textPrimary} />
+        </Pressable>
+        {onProfilePress && (
+          <Pressable style={styles.profileButton} onPress={onProfilePress} hitSlop={8} accessibilityLabel="Profile">
+            <Feather name="user" size={20} color={colors.textPrimary} />
+          </Pressable>
+        )}
+      </View>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setMenuOpen(false)}>
@@ -93,28 +104,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.md,
+    marginBottom: 20,
   },
   pager: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.pillBackground,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.xs,
+    padding: spacing.xs,
   },
   chevron: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-  },
-  chevronText: {
-    fontSize: 22,
-    color: colors.textPrimary,
-    fontWeight: "600",
-  },
-  chevronTextDisabled: {
-    color: colors.textTertiary,
   },
   datePill: {
     paddingHorizontal: spacing.sm,
@@ -123,23 +128,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateText: {
-    ...typography.label,
+    fontFamily: fonts.displayBold,
+    fontWeight: "700",
+    fontSize: 17,
     color: colors.textPrimary,
   },
-  menuButton: {
-    width: 40,
-    height: 40,
+  actions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.badgeActive,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuButtonText: {
-    fontSize: 22,
-    color: colors.textPrimary,
-    fontWeight: "700",
+  menuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(19,32,26,0.45)",
     alignItems: "flex-end",
   },
   menuCard: {

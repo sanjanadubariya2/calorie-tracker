@@ -85,7 +85,7 @@ export function SharingSettingsModal({ visible, onClose }: Props) {
             </Pressable>
           </View>
           {loading ? (
-            <ActivityIndicator color={colors.progressFill} style={{ marginVertical: spacing.xl }} />
+            <ActivityIndicator color={colors.link} style={{ marginVertical: spacing.xl }} />
           ) : (
             <ScrollView>
               <View style={styles.row}>
@@ -143,14 +143,14 @@ export function SharingSettingsModal({ visible, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
     padding: spacing.lg, maxHeight: "85%", borderWidth: 1, borderColor: colors.cardBorder,
   },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
   title: { ...typography.title, color: colors.textPrimary },
-  done: { ...typography.label, color: colors.progressFill },
+  done: { ...typography.label, color: colors.link },
   row: {
     flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md,
     borderBottomWidth: 1, borderBottomColor: colors.divider,

@@ -53,7 +53,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.centerScreen}>
-        <ActivityIndicator color={colors.progressFill} size="large" />
+        <ActivityIndicator color={colors.link} size="large" />
       </View>
     );
   }
@@ -108,7 +108,7 @@ export default function ProfileScreen() {
             style={styles.editButton}
             onPress={() => router.push("/modals/achievements")}
           >
-            <Text style={styles.editButtonText}>🏅 Achievements & streaks</Text>
+            <Text style={styles.editButtonText}>Achievements & streaks</Text>
           </Pressable>
 
           <View style={styles.card}>

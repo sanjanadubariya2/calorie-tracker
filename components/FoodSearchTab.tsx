@@ -122,7 +122,7 @@ export function FoodSearchTab({
 
       {loading && (
         <View style={styles.centerRow}>
-          <ActivityIndicator color={colors.progressFill} />
+          <ActivityIndicator color={colors.link} />
         </View>
       )}
 

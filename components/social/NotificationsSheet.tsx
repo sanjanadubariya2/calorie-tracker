@@ -144,7 +144,7 @@ export function NotificationsSheet({ visible, onClose, onNavigate }: Props) {
                 </Pressable>
               )}
               ListFooterComponent={
-                loadingMore ? <ActivityIndicator color={colors.progressFill} style={{ margin: spacing.md }} />
+                loadingMore ? <ActivityIndicator color={colors.link} style={{ margin: spacing.md }} />
                 : next ? (
                   <Pressable testID="notifications-more" onPress={loadMore} style={styles.retry}>
                     <Text style={styles.link}>Load older</Text>
@@ -162,7 +162,7 @@ export function NotificationsSheet({ visible, onClose, onNavigate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg,
     maxHeight: "85%", borderWidth: 1, borderColor: colors.cardBorder,
@@ -171,16 +171,16 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   iconButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   title: { ...typography.title, color: colors.textPrimary },
-  done: { ...typography.label, color: colors.progressFill },
+  done: { ...typography.label, color: colors.link },
   icon: { fontSize: 20 },
   markAll: { alignSelf: "flex-start", paddingVertical: spacing.sm, minHeight: 44, justifyContent: "center" },
-  link: { ...typography.label, color: colors.progressFill },
+  link: { ...typography.label, color: colors.link },
   center: { alignItems: "center", padding: spacing.lg },
   empty: { ...typography.caption, color: colors.textSecondary, textAlign: "center", padding: spacing.lg, lineHeight: 18 },
   retry: { alignItems: "center", padding: spacing.md, minHeight: 44 },
   skeleton: { height: 56, borderRadius: radius.md, backgroundColor: colors.pillBackground, marginBottom: spacing.sm },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.md, padding: spacing.sm, borderRadius: radius.md, minHeight: 56 },
-  rowUnread: { backgroundColor: "rgba(126,211,33,0.06)" },
+  rowUnread: { backgroundColor: colors.accentTint },
   systemIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.pillBackground, alignItems: "center", justifyContent: "center" },
   text: { ...typography.body, fontSize: 14, color: colors.textSecondary, lineHeight: 19 },
   textUnread: { color: colors.textPrimary },

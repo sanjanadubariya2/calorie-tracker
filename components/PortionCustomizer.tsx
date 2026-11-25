@@ -136,9 +136,9 @@ export function PortionCustomizer({ food, onConfirm, onCancel }: Props) {
         </View>
 
         <View style={styles.macroValuesRow}>
-          <Text style={[styles.macroValue, { color: colors.carb }]}>{computed.carbsG} g</Text>
-          <Text style={[styles.macroValue, { color: colors.fat }]}>{computed.fatG} g</Text>
-          <Text style={[styles.macroValue, { color: colors.protein }]}>{computed.proteinG} g</Text>
+          <Text style={[styles.macroValue, { color: colors.carbText }]}>{computed.carbsG} g</Text>
+          <Text style={[styles.macroValue, { color: colors.fatText }]}>{computed.fatG} g</Text>
+          <Text style={[styles.macroValue, { color: colors.proteinText }]}>{computed.proteinG} g</Text>
         </View>
       </View>
 
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   starActive: {
-    color: colors.badgeActive,
+    color: colors.warning,
   },
   gramsRow: {
     flexDirection: "row",
@@ -326,6 +326,6 @@ const styles = StyleSheet.create({
   },
   saveText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
 });

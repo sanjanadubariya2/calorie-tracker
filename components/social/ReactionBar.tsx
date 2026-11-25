@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder, paddingHorizontal: 10, paddingVertical: 4, minHeight: 34, minWidth: 40,
     justifyContent: "center",
   },
-  chipOn: { borderColor: colors.progressFill, backgroundColor: "rgba(126,211,33,0.12)" },
+  chipOn: { borderColor: colors.progressFill, backgroundColor: colors.accentTint },
   emoji: { fontSize: 14 },
   count: { ...typography.caption, color: colors.textSecondary },
-  countOn: { color: colors.progressFill },
+  countOn: { color: colors.link },
 });

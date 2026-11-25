@@ -30,7 +30,7 @@ export default function Index() {
   if (loading || checkingProfile) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={colors.progressFill} size="large" />
+        <ActivityIndicator color={colors.link} size="large" />
       </View>
     );
   }

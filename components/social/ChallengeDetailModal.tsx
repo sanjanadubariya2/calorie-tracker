@@ -80,7 +80,7 @@ export function ChallengeDetailModal({ challenge: c, today, busy, error, onClose
                   <Text style={styles.checked}>✓ Checked in today</Text>
                 ) : (
                   <Pressable testID="detail-checkin" style={styles.primary} onPress={() => onCheckIn(c)} disabled={busy}>
-                    {busy ? <ActivityIndicator color="#0A0A0A" /> : <Text style={styles.primaryText}>{c.checkin_label ?? "Check in"}</Text>}
+                    {busy ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.primaryText}>{c.checkin_label ?? "Check in"}</Text>}
                   </Pressable>
                 )
               ) : null}
@@ -100,7 +100,7 @@ export function ChallengeDetailModal({ challenge: c, today, busy, error, onClose
                 {peopleError ? (
                   <Text style={styles.small}>Couldn't load participants.</Text>
                 ) : people === null ? (
-                  <ActivityIndicator color={colors.progressFill} />
+                  <ActivityIndicator color={colors.link} />
                 ) : (
                   people.map((p) => (
                     <View key={p.user_id} style={styles.person} testID={`participant-${p.user_id}`}>
@@ -134,14 +134,14 @@ export function ChallengeDetailModal({ challenge: c, today, busy, error, onClose
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
     padding: spacing.lg, maxHeight: "90%", borderWidth: 1, borderColor: colors.cardBorder,
   },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.md },
   title: { ...typography.title, color: colors.textPrimary, flex: 1 },
-  done: { ...typography.label, color: colors.progressFill },
+  done: { ...typography.label, color: colors.link },
   chips: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: spacing.sm },
   body: { ...typography.body, fontSize: 15, color: colors.textSecondary, marginTop: spacing.md, lineHeight: 21 },
   meta: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.xs },
@@ -149,12 +149,12 @@ const styles = StyleSheet.create({
   section: { ...typography.label, color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.sm },
   message: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.sm },
   small: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.sm },
-  checked: { ...typography.label, color: colors.progressFill, marginTop: spacing.md },
+  checked: { ...typography.label, color: colors.link, marginTop: spacing.md },
   primary: {
     backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.sm,
     alignItems: "center", marginTop: spacing.md,
   },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
   safety: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.md, lineHeight: 17 },
   error: { ...typography.caption, color: colors.danger, marginTop: spacing.sm },
   person: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.sm },

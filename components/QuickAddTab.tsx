@@ -85,6 +85,6 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
 });

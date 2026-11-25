@@ -1,7 +1,7 @@
 import React from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
-import { colors, radius, spacing, typography } from "@/constants/theme";
+import { colors, fonts, radius, spacing, typography } from "@/constants/theme";
 
 // Direct APK link from the latest EAS build. Update this when a new build
 // replaces it — see README section 5.
@@ -161,8 +161,10 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 38,
-    lineHeight: 46,
-    fontWeight: "700",
+    lineHeight: 44,
+    fontWeight: "800",
+    fontFamily: fonts.display,
+    letterSpacing: -1,
     textAlign: "center",
   },
   heroTitleWide: {
@@ -170,10 +172,10 @@ const styles = StyleSheet.create({
     lineHeight: 72,
   },
   heroMuted: {
-    color: colors.textTertiary,
+    color: colors.textPrimary,
   },
   heroBright: {
-    color: colors.progressFill,
+    color: colors.link,
   },
   heroSub: {
     ...typography.body,
@@ -201,7 +203,7 @@ const styles = StyleSheet.create({
   },
   primaryCtaText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
   secondaryCta: {
     borderWidth: 1,

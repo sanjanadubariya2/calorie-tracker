@@ -25,5 +25,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg, paddingTop: spacing.lg,
   },
   title: { ...typography.title, color: colors.textPrimary },
-  close: { ...typography.label, color: colors.progressFill },
+  close: { ...typography.label, color: colors.link },
 });

@@ -88,7 +88,7 @@ export function NotificationSettingsSheet({ visible, onClose }: Props) {
             </Pressable>
           </View>
           {loading ? (
-            <ActivityIndicator color={colors.progressFill} style={{ margin: spacing.xl }} />
+            <ActivityIndicator color={colors.link} style={{ margin: spacing.xl }} />
           ) : (
             <ScrollView>
               <Text style={styles.section}>In the app</Text>
@@ -133,7 +133,7 @@ export function NotificationSettingsSheet({ visible, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg,
     maxHeight: "85%", borderWidth: 1, borderColor: colors.cardBorder,
@@ -141,13 +141,13 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { ...typography.title, color: colors.textPrimary },
   close: { minWidth: 44, minHeight: 44, alignItems: "flex-end", justifyContent: "center" },
-  done: { ...typography.label, color: colors.progressFill },
+  done: { ...typography.label, color: colors.link },
   section: { ...typography.label, color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.xs },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md,
          borderBottomWidth: 1, borderBottomColor: colors.divider, minHeight: 56 },
   label: { ...typography.body, fontSize: 15, color: colors.textPrimary },
   hint: { ...typography.caption, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
   linkRow: { paddingVertical: spacing.md, minHeight: 44 },
-  link: { ...typography.label, color: colors.progressFill },
+  link: { ...typography.label, color: colors.link },
   error: { ...typography.caption, color: colors.danger, marginTop: spacing.sm },
 });

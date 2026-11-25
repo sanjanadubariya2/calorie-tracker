@@ -57,7 +57,7 @@ export function ConfirmDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(19,32,26,0.45)",
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,
@@ -105,13 +105,13 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
   destructiveButton: {
     backgroundColor: colors.danger,
   },
   destructiveText: {
     ...typography.label,
-    color: "#0A0A0A",
+    color: colors.onAccent,
   },
 });

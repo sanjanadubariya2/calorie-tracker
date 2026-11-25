@@ -119,6 +119,7 @@ export default function DashboardScreen() {
         onPrevDay={() => setSelectedDate((d) => shiftDate(d, -1))}
         onNextDay={() => setSelectedDate((d) => shiftDate(d, 1))}
         onJumpToToday={() => setSelectedDate(todayISO)}
+        onProfilePress={() => router.push("/profile")}
         menuItems={[
           { label: "Set target", onPress: () => router.push("/onboarding/profile-setup") },
           { label: "Meal types to show", onPress: () => router.push("/modals/meal-types") },
@@ -130,7 +131,7 @@ export default function DashboardScreen() {
 
       {loading ? (
         <View style={styles.contentSpinner}>
-          <ActivityIndicator color={colors.progressFill} size="large" />
+          <ActivityIndicator color={colors.link} size="large" />
         </View>
       ) : (
         <>
@@ -182,7 +183,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: 20,
+    paddingTop: 56,
     paddingBottom: spacing.xl,
   },
   errorText: {

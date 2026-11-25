@@ -166,10 +166,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 44,
-    backgroundColor: "rgba(126, 211, 33, 0.12)",
+    backgroundColor: colors.accentTint,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "rgba(126, 211, 33, 0.35)",
+    borderColor: colors.link,
   },
   avgLine: {
     position: "absolute",

@@ -77,7 +77,7 @@ export function ChallengeProgressCard({ challenge: c, today, busy, onOpen, onChe
             ) : (
               <Pressable testID={`checkin-${c.challenge_id}`} style={[styles.primary, styles.wide]} onPress={onCheckIn}
                          disabled={busy}>
-                {busy ? <ActivityIndicator color="#0A0A0A" /> : <Text style={styles.primaryText}>{c.checkin_label ?? "Check in"}</Text>}
+                {busy ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.primaryText}>{c.checkin_label ?? "Check in"}</Text>}
               </Pressable>
             )
           ) : null}
@@ -148,12 +148,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm, alignItems: "center", justifyContent: "center",
   },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
   wide: { marginTop: spacing.md },
   secondary: { borderWidth: 1, borderColor: colors.cardBorder, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   secondaryText: { ...typography.label, color: colors.textPrimary },
   joined: { backgroundColor: colors.pillBackground },
-  joinedText: { ...typography.label, color: colors.progressFill },
+  joinedText: { ...typography.label, color: colors.link },
   checkedIn: { marginTop: spacing.md, alignItems: "center", paddingVertical: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.pillBackground },
-  checkedInText: { ...typography.label, color: colors.progressFill },
+  checkedInText: { ...typography.label, color: colors.link },
 });

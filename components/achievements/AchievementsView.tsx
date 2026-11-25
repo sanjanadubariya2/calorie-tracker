@@ -74,7 +74,7 @@ export function AchievementsView() {
   }, [load]);
 
   if (status === "loading") {
-    return <View style={styles.center} testID="achievements-loading"><ActivityIndicator color={colors.progressFill} size="large" /></View>;
+    return <View style={styles.center} testID="achievements-loading"><ActivityIndicator color={colors.link} size="large" /></View>;
   }
   if (status !== "ready") {
     return (
@@ -191,14 +191,14 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md },
   streakRow: { flexDirection: "row", gap: spacing.lg, alignItems: "center" },
   streakMain: { alignItems: "center", minWidth: 90 },
-  streakNumber: { ...typography.hero, color: colors.progressFill },
+  streakNumber: { ...typography.hero, color: colors.link },
   streakUnit: { ...typography.caption, color: colors.textSecondary },
   stats: { flex: 1, flexDirection: "row", flexWrap: "wrap", rowGap: spacing.sm },
   stat: { width: "50%" },
   statValue: { ...typography.label, color: colors.textPrimary },
   statLabel: { ...typography.caption, fontSize: 11, color: colors.textTertiary },
   streakMessage: { ...typography.body, fontSize: 14, color: colors.textSecondary, marginTop: spacing.md, lineHeight: 20 },
-  kicker: { ...typography.caption, color: colors.badgeActive, textTransform: "uppercase", letterSpacing: 1 },
+  kicker: { ...typography.caption, color: colors.warning, textTransform: "uppercase", letterSpacing: 1 },
   nextRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginVertical: spacing.md },
   nextIcon: { fontSize: 36 },
   nextTitle: { ...typography.label, fontSize: 16, color: colors.textPrimary },
@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
   fill: { height: "100%", borderRadius: radius.pill },
   tabs: { flexDirection: "row", gap: spacing.sm, marginVertical: spacing.sm },
   tab: { borderRadius: radius.pill, borderWidth: 1, borderColor: colors.cardBorder, paddingHorizontal: spacing.md, paddingVertical: 6 },
-  tabOn: { backgroundColor: colors.textPrimary, borderColor: colors.textPrimary },
+  tabOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   tabText: { ...typography.caption, color: colors.textSecondary },
-  tabTextOn: { color: "#0A0A0A" },
+  tabTextOn: { color: colors.onPrimary },
   section: { ...typography.label, fontSize: 16, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.sm },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   badge: { width: "48%", flexGrow: 1, backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, alignItems: "center" },
-  badgeLocked: { backgroundColor: "#0E0E0E", borderWidth: 1, borderColor: colors.divider },
+  badgeLocked: { backgroundColor: colors.pillBackground, borderWidth: 1, borderColor: colors.divider },
   badgeIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.pillBackground, alignItems: "center", justifyContent: "center", marginBottom: spacing.sm },
   badgeIconOn: { borderWidth: 2, borderColor: colors.badgeActive },
   badgeEmoji: { fontSize: 28 },
@@ -226,6 +226,6 @@ const styles = StyleSheet.create({
   empty: { ...typography.caption, color: colors.textSecondary, textAlign: "center", paddingVertical: spacing.xl },
   emptyTitle: { ...typography.label, fontSize: 16, color: colors.textPrimary, textAlign: "center" },
   primary: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.lg },
-  primaryText: { ...typography.label, color: "#0A0A0A" },
+  primaryText: { ...typography.label, color: colors.onAccent },
   footnote: { ...typography.caption, color: colors.textTertiary, textAlign: "center", marginTop: spacing.lg, lineHeight: 17 },
 });

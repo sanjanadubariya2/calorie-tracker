@@ -126,7 +126,7 @@ export default function ReportsScreen() {
 
         {loading ? (
           <View style={styles.spinnerWrap}>
-            <ActivityIndicator color={colors.progressFill} size="large" />
+            <ActivityIndicator color={colors.link} size="large" />
           </View>
         ) : loadError ? (
           <View style={styles.spinnerWrap}>
@@ -246,14 +246,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   modeChipActive: {
-    backgroundColor: colors.pillBackground,
+    backgroundColor: colors.primary,
   },
   modeText: {
     ...typography.label,
     color: colors.textSecondary,
   },
   modeTextActive: {
-    color: colors.textPrimary,
+    color: colors.onPrimary,
   },
   card: {
     backgroundColor: colors.card,
@@ -290,14 +290,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pillBackground,
   },
   metricChipActive: {
-    backgroundColor: colors.textPrimary,
+    backgroundColor: colors.primary,
   },
   metricText: {
     ...typography.label,
     color: colors.textSecondary,
   },
   metricTextActive: {
-    color: "#0A0A0A",
+    color: colors.onPrimary,
   },
   spinnerWrap: {
     paddingVertical: 64,

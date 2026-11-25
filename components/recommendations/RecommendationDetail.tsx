@@ -176,9 +176,9 @@ export function RecommendationDetailSheet({ id, onClose, onSavedChange, onAsk }:
             ))}
             <View style={styles.totals} accessible testID="rec-detail-nutrition">
               <Text style={styles.kcal}>{detail.total_nutrition.kcal} kcal</Text>
-              <Text style={[styles.macro, { color: colors.protein }]}>P {detail.total_nutrition.protein_g} g</Text>
-              <Text style={[styles.macro, { color: colors.carb }]}>C {detail.total_nutrition.carbs_g} g</Text>
-              <Text style={[styles.macro, { color: colors.fat }]}>F {detail.total_nutrition.fat_g} g</Text>
+              <Text style={[styles.macro, { color: colors.proteinText }]}>P {detail.total_nutrition.protein_g} g</Text>
+              <Text style={[styles.macro, { color: colors.carbText }]}>C {detail.total_nutrition.carbs_g} g</Text>
+              <Text style={[styles.macro, { color: colors.fatText }]}>F {detail.total_nutrition.fat_g} g</Text>
               {loading && <ActivityIndicator size="small" color={colors.textSecondary} />}
             </View>
             <Text style={styles.caption}>
@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
     ...typography.caption, color: colors.textSecondary, backgroundColor: colors.pillBackground,
     borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2, overflow: "hidden",
   },
-  caution: { color: colors.protein },
-  warning: { ...typography.caption, color: colors.protein, marginTop: spacing.xs },
+  caution: { color: colors.proteinText },
+  warning: { ...typography.caption, color: colors.proteinText, marginTop: spacing.xs },
   errorBox: { padding: spacing.md, gap: spacing.sm },
   error: { ...typography.body, color: colors.danger },
   success: { ...typography.label, color: colors.success, marginTop: spacing.md },
   buttons: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm, marginTop: spacing.lg },
-  primary: { backgroundColor: colors.textPrimary, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  primaryText: { ...typography.label, color: colors.background },
+  primary: { backgroundColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  primaryText: { ...typography.label, color: colors.onPrimary },
   secondary: { borderRadius: radius.pill, borderWidth: 1, borderColor: colors.cardBorder, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   secondaryText: { ...typography.label, color: colors.textPrimary },
   disabled: { opacity: 0.5 },

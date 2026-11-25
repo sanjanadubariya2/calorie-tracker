@@ -98,7 +98,7 @@ export function CommentsSheet({ event, onClose }: Props) {
             {loadError ? (
               <Text style={styles.error}>{loadError}</Text>
             ) : comments === null ? (
-              <ActivityIndicator color={colors.progressFill} style={{ margin: spacing.lg }} />
+              <ActivityIndicator color={colors.link} style={{ margin: spacing.lg }} />
             ) : comments.length === 0 ? (
               <Text style={styles.empty} testID="comments-empty">No comments yet. Say something encouraging!</Text>
             ) : (
@@ -145,7 +145,7 @@ export function CommentsSheet({ event, onClose }: Props) {
             />
             <Pressable testID="comment-post" style={[styles.post, (chars === 0 || chars > COMMENT_MAX || posting) && styles.disabled]}
                        disabled={chars === 0 || chars > COMMENT_MAX || posting} onPress={post}>
-              {posting ? <ActivityIndicator color="#0A0A0A" /> : <Text style={styles.postText}>Post</Text>}
+              {posting ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.postText}>Post</Text>}
             </Pressable>
           </View>
           <Text style={[styles.counter, chars > COMMENT_MAX && { color: colors.danger }]}>{chars}/{COMMENT_MAX}</Text>
@@ -175,14 +175,14 @@ export function commentAudience(event: Pick<ActivityEvent, "is_me" | "actor_user
 
 const styles = StyleSheet.create({
   audience: { ...typography.caption, fontSize: 11, color: colors.textTertiary, marginTop: spacing.sm, lineHeight: 15 },
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  backdrop: { flex: 1, backgroundColor: "rgba(19,32,26,0.45)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg,
     maxHeight: "85%", borderWidth: 1, borderColor: colors.cardBorder,
   },
   titleRow: { flexDirection: "row", justifyContent: "space-between", gap: spacing.md, marginBottom: spacing.sm },
   title: { ...typography.label, fontSize: 16, color: colors.textPrimary, flex: 1 },
-  done: { ...typography.label, color: colors.progressFill },
+  done: { ...typography.label, color: colors.link },
   list: { maxHeight: 380 },
   empty: { ...typography.caption, color: colors.textSecondary, textAlign: "center", padding: spacing.lg },
   comment: { flexDirection: "row", gap: spacing.sm, paddingVertical: spacing.sm },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm, color: colors.textPrimary, maxHeight: 100, ...typography.body, fontSize: 15,
   },
   post: { backgroundColor: colors.progressFill, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  postText: { ...typography.label, color: "#0A0A0A" },
+  postText: { ...typography.label, color: colors.onAccent },
   disabled: { opacity: 0.4 },
   counter: { ...typography.caption, fontSize: 11, color: colors.textTertiary, textAlign: "right", marginTop: 4 },
 });
